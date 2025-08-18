@@ -3,7 +3,7 @@ from flask import request, jsonify
 from utils.jwt_util import decode_token
 
 
-def token_required(f: function):
+def token_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
         token = request.headers.get('Authorization')

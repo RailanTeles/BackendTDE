@@ -37,7 +37,7 @@ class Comandos:
             self.cursor.execute(comando)
         else:
             self.cursor.execute(comando, parametros)
-        resultado = self.cursor.fetchone()[0]
-        return resultado
+        resultado = self.cursor.fetchone()
+        return dict(resultado)
         
         

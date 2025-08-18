@@ -2,7 +2,7 @@ import math
 from utils.comandos_sql import Comandos
 from models.usuario import Usuario
 
-class daoUsuario(Comandos):
+class UsuarioDao(Comandos):
     def obterUsuarioId(self, id: int):
         """Obter usuários com base no id"""
         self.conectar()
@@ -10,7 +10,7 @@ class daoUsuario(Comandos):
         self.desconectar()
         return {
             "usuario": usuario
-        }, 200
+        }
     
     def obterUsuarioEmail(self, email: str):
         """Obter usuários com base no email"""
@@ -19,14 +19,15 @@ class daoUsuario(Comandos):
         self.desconectar()
         return {
             "usuario": usuario
-        }, 200
+        }
     
     def obterListaUsuarios(self, qtdUsuariosPorPagina: int, paginaAtual: int):
         """Obter todos os usuários paginação"""
         self.conectar()
         desvio = qtdUsuariosPorPagina * (paginaAtual - 1)
         usuarios = self.obterRegistros("SELECT * FROM usuarios ORDER BY id DESC LIMIT ? OFFSET ?", (qtdUsuariosPorPagina, desvio))
-        usuariosTotais = self.obterRegistro("SELECT COUNT(id) FROM usuarios")
+        usuariosTotais = self.obterRegistro("SELECT COUNT(id) as total FROM usuarios")
+        usuariosTotais = usuariosTotais.get('total')
         totalPaginas = math.ceil(usuariosTotais / qtdUsuariosPorPagina) if usuariosTotais else 1
         self.desconectar()
         return {
@@ -35,7 +36,7 @@ class daoUsuario(Comandos):
             "qtdUsuariosPorPagina" : qtdUsuariosPorPagina,
             "usuariosTotais" : usuariosTotais,
             "usuarios" : usuarios
-        }, 200
+        }
     
     def adicionarUsuario(self, usuario: Usuario):
         """Adicionar um usuário"""
@@ -45,7 +46,7 @@ class daoUsuario(Comandos):
         self.desconectar()
         return {
             "msg": "Usuário adicionado com sucesso"
-        }, 200
+        }
 
     def editarUsuario(self, usuario: Usuario):
         """Editar um usuário com base no id"""
@@ -55,7 +56,7 @@ class daoUsuario(Comandos):
         self.desconectar()
         return {
             "msg" : "Usuário editado com sucesso"
-        }, 200
+        }
     
     def resetarSenhaUsuario(self, usuario: Usuario):
         """Usuário admin resetar a senha para padrão com base no e-mail"""
@@ -66,7 +67,7 @@ class daoUsuario(Comandos):
         self.desconectar()
         return {
             "msg" : "Senha resetada com sucesso"
-        }, 200
+        }
     
     def redefinirSenha(self, novaSenha: str, usuario: Usuario):
         """Próprio usuário editando sua senha com base no id"""
@@ -76,7 +77,7 @@ class daoUsuario(Comandos):
         self.desconectar()
         return {
             "msg" : "Senha alterada com sucesso"
-        }, 200
+        }
     
     def removerUsuario(self, usuario: Usuario):
         """Usuário admin removendo um usuário com base no e-mail"""
@@ -86,4 +87,4 @@ class daoUsuario(Comandos):
         self.desconectar()
         return {
             "msg" : "Usuário deletado com sucesso"
-        }, 200
+        }
