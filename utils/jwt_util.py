@@ -12,7 +12,7 @@ if not MINHA_CHAVE_SECRETA:
     dotenv.load_dotenv()
     MINHA_CHAVE_SECRETA = os.getenv("MINHA_CHAVE_SECRETA")
 
-def generate_token(id):
+def generate_token(id: int):
     """
     Gera um token JWT para o usuário com base no id
     """
@@ -26,7 +26,7 @@ def generate_token(id):
     token = jwt.encode(payload,MINHA_CHAVE_SECRETA, algorithm='HS256')
     return token
 
-def decode_token(token):
+def decode_token(token: str):
     """
     Decodifica o token JWT e retorna o id do usuário.
     Aceita token com ou sem prefixo 'Bearer '.
