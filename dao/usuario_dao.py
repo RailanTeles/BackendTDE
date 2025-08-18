@@ -1,17 +1,27 @@
 import math
 from utils.comandos_sql import Comandos
+from models.usuario import Usuario
 
 class daoUsuario(Comandos):
     def obterUsuarioId(self, id: int):
         """Obter usuários com base no id"""
         self.conectar()
-        usuarios = self.obterRegistros("SELECT * FROM usuarios WHERE id=?", (id, ))
+        usuario = self.obterRegistro("SELECT * FROM usuarios WHERE id=?", (id, ))
         self.desconectar()
         return {
-            "usuarios": usuarios
-        }
+            "usuario": usuario
+        }, 200
     
-    def obterUsuarios(self, qtdUsuariosPorPagina: int, paginaAtual: int):
+    def obterUsuarioEmail(self, email: str):
+        """Obter usuários com base no email"""
+        self.conectar()
+        usuario = self.obterRegistro("SELECT * FROM usuarios WHERE email=?", (email, ))
+        self.desconectar()
+        return {
+            "usuario": usuario
+        }, 200
+    
+    def obterListaUsuarios(self, qtdUsuariosPorPagina: int, paginaAtual: int):
         """Obter todos os usuários paginação"""
         self.conectar()
         desvio = qtdUsuariosPorPagina * (paginaAtual - 1)
@@ -25,5 +35,55 @@ class daoUsuario(Comandos):
             "qtdUsuariosPorPagina" : qtdUsuariosPorPagina,
             "usuariosTotais" : usuariosTotais,
             "usuarios" : usuarios
-        }
+        }, 200
+    
+    def adicionarUsuario(self, usuario: Usuario):
+        """Adicionar um usuário"""
+        self.conectar()
+        self.obterRegistro("INSERT INTO usuarios (nome, email, tipo, senha) VALUES (?, ?, ?, ?)", (usuario.nome, usuario.email, usuario.tipo, usuario.senha))
+        self.comitar()
+        self.desconectar()
+        return {
+            "msg": "Usuário adicionado com sucesso"
+        }, 200
 
+    def editarUsuario(self, usuario: Usuario):
+        """Editar um usuário com base no id"""
+        self.conectar()
+        self.obterRegistro("UPDATE usuarios SET email = ?, nome = ? WHERE id = ?", (usuario.email, usuario.nome, usuario.id))
+        self.comitar()
+        self.desconectar()
+        return {
+            "msg" : "Usuário editado com sucesso"
+        }, 200
+    
+    def resetarSenhaUsuario(self, usuario: Usuario):
+        """Usuário admin resetar a senha para padrão com base no e-mail"""
+        self.conectar()
+        senhaPadrao = "123456"
+        self.obterRegistro("UPDATE usuarios SET senha = ? WHERE email = ?", (senhaPadrao, usuario.email))
+        self.comitar()
+        self.desconectar()
+        return {
+            "msg" : "Senha resetada com sucesso"
+        }, 200
+    
+    def redefinirSenha(self, novaSenha: str, usuario: Usuario):
+        """Próprio usuário editando sua senha com base no id"""
+        self.conectar()
+        self.obterRegistro("UPDATE usuarios SET senha = ? WHERE id = ?", (novaSenha, usuario.id))
+        self.comitar()
+        self.desconectar()
+        return {
+            "msg" : "Senha alterada com sucesso"
+        }, 200
+    
+    def removerUsuario(self, usuario: Usuario):
+        """Usuário admin removendo um usuário com base no e-mail"""
+        self.conectar()
+        self.obterRegistro("DELETE FROM usuarios WHERE email = ?", (usuario.email,))
+        self.comitar()
+        self.desconectar()
+        return {
+            "msg" : "Usuário deletado com sucesso"
+        }, 200

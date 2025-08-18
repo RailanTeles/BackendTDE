@@ -14,6 +14,9 @@ class Comandos:
         self.cursor.close()
         self.conn.close()
 
+    def comitar(self):
+        self.conn.commit()
+
     def obterRegistros(self, comando, parametros = None):
         """
         Executa um comando no mysql com ou sem parãmetros. Deve ser usado para comandos que retornam lista
