@@ -8,18 +8,14 @@ class UsuarioDao(Comandos):
         self.conectar()
         usuario = self.obterRegistro("SELECT * FROM usuarios WHERE id=?", (id, ))
         self.desconectar()
-        return {
-            "usuario": usuario
-        }
+        return usuario
     
     def obterUsuarioEmail(self, email: str):
         """Obter usuários com base no email"""
         self.conectar()
         usuario = self.obterRegistro("SELECT * FROM usuarios WHERE email=?", (email, ))
         self.desconectar()
-        return {
-            "usuario": usuario
-        }
+        return usuario
     
     def obterListaUsuarios(self, qtdUsuariosPorPagina: int, paginaAtual: int):
         """Obter todos os usuários paginação"""

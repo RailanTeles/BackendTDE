@@ -11,14 +11,13 @@ class UsuarioController:
         email = data.get('email')
         senha = data.get('senha')
 
-        resultado = self.usuarioDao.obterUsuarioEmail(email)
-        usuario = resultado.get('usuario')
+        usuario = self.usuarioDao.obterUsuarioEmail(email)
 
         if not usuario:
             return {
                 "msg": "E-mail ou senha incorretas"
             }, 404
-        
+
         if senha != usuario.get('senha'):
             return {
                 "msg": "E-mail ou senha incorretas"

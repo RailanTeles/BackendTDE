@@ -15,6 +15,7 @@ class Comandos:
         self.conn.close()
 
     def comitar(self):
+        """Comitar: Usado quando executar os comandos: Insert, Update ou Delete"""
         self.conn.commit()
 
     def obterRegistros(self, comando, parametros = None):
@@ -26,6 +27,8 @@ class Comandos:
         else:
             self.cursor.execute(comando, parametros)
         linhas = self.cursor.fetchall()
+        if not linhas:
+            return None
         resultado = [dict(linha) for linha in linhas]
         return resultado
     
@@ -38,6 +41,8 @@ class Comandos:
         else:
             self.cursor.execute(comando, parametros)
         resultado = self.cursor.fetchone()
+        if not resultado:
+            return None
         return dict(resultado)
         
         
