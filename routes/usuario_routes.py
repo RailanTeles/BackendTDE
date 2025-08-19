@@ -47,3 +47,17 @@ def obterUsuarios():
         return {
             "msg": f"{str(e)}"
         }, 500
+    
+@usuario_routes.route("/api/v1/usuarios/editar", methods=['PUT'])
+@token_required
+def editarMe():
+    """Endpoint que o usuário edita suas próprias informações"""
+    try:
+        token = request.headers.get('Authorization')
+        data = request.get_json()
+        return usuarioController.editarMe(token, data)
+
+    except Exception as e:
+        return {
+            "msg": f"{str(e)}"
+        }, 500

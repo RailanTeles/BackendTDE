@@ -70,3 +70,26 @@ class UsuarioController:
         
         return response, 200
 
+    def editarMe(self, token: str, data):
+        idUsuario = decode_token(token)
+
+        email = data.get('email')
+        nome = data.get('nome')
+
+        if not email or not nome:
+            return {
+                "msg" : "Os novos nome e email devem ser informados"
+            }, 400
+
+        usuario = self.usuarioDao.obterUsuarioEmail(email)
+
+        if usuario.get('id') != idUsuario:
+            return {
+                "msg" : "Email já cadastrado"
+            }, 409
+
+        novasInfos = Usuario(idUsuario, email, nome, "", "")
+
+        response = self.usuarioDao.editarUsuario(novasInfos)
+
+        return response, 200
