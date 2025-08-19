@@ -17,6 +17,7 @@ cursor = conn.cursor()
 # """)
 
 # cursor.execute("INSERT INTO usuarios (email, nome, tipo, senha) VALUES ('admin@consultorio.com', 'admin123', 'admin', 'admin123')")
+# cursor.execute("INSERT INTO usuarios (email, nome, tipo, senha) VALUES ('default@consultorio.com', 'default', 'default', 'default123')")
 
 # cursor.execute("""
 #     CREATE TABLE Pacientes(

@@ -17,19 +17,23 @@ class UsuarioDao(Comandos):
         self.desconectar()
         return usuario
     
-    def obterListaUsuarios(self, qtdUsuariosPorPagina: int, paginaAtual: int):
+    def obterListaUsuarios(self, itensPorPagina: int, pagina: int):
         """Obter todos os usuários paginação"""
         self.conectar()
-        desvio = qtdUsuariosPorPagina * (paginaAtual - 1)
-        usuarios = self.obterRegistros("SELECT * FROM usuarios ORDER BY id DESC LIMIT ? OFFSET ?", (qtdUsuariosPorPagina, desvio))
+        desvio = itensPorPagina * (pagina - 1)
+        usuarios = self.obterRegistros("SELECT * FROM usuarios ORDER BY id DESC LIMIT ? OFFSET ?", (itensPorPagina, desvio))
         usuariosTotais = self.obterRegistro("SELECT COUNT(id) as total FROM usuarios")
         usuariosTotais = usuariosTotais.get('total')
-        totalPaginas = math.ceil(usuariosTotais / qtdUsuariosPorPagina) if usuariosTotais else 1
+        totalPaginas = math.ceil(usuariosTotais / itensPorPagina) if usuariosTotais else 1
         self.desconectar()
+
+        if pagina > totalPaginas:
+            return None
+
         return {
-            "paginaAtual": paginaAtual,
+            "pagina": pagina,
             "totalPaginas": totalPaginas,
-            "qtdUsuariosPorPagina" : qtdUsuariosPorPagina,
+            "itensPorPagina" : itensPorPagina,
             "usuariosTotais" : usuariosTotais,
             "usuarios" : usuarios
         }

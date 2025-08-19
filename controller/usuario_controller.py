@@ -29,4 +29,44 @@ class UsuarioController:
             "token": token,
             "msg": "Logado com sucesso"
         }, 200
+    
+    def obterUsuario(self, email: str, token: str):
+        idEsseUsuario = decode_token(token)
+
+        esseUsuario = self.usuarioDao.obterUsuarioId(idEsseUsuario)
+
+        usuario = self.usuarioDao.obterUsuarioEmail(email)
+
+        if not usuario:
+            return {
+                "msg": "Usuário não encontrado"
+            }, 404
+
+        if esseUsuario.get('id') != usuario.get('id') and esseUsuario.get('tipo') != 'admin':
+            return {
+                "msg": "Acesso negado"
+            }, 403
+
+        return {
+            "usuario" : usuario
+        }, 200
+
+    def obterUsuarios(self, token: str, itensPorPagina: int, pagina: int):
+        idUsuario = decode_token(token)
+
+        usuario = self.usuarioDao.obterUsuarioId(idUsuario)
+
+        if usuario.get('tipo') != 'admin':
+            return {
+                "msg": "Acesso negado"
+            }, 403
         
+        response = self.usuarioDao.obterListaUsuarios(itensPorPagina, pagina)
+
+        if not response:
+            return{
+                "msg" : "Index indiponível"
+            }, 404
+        
+        return response, 200
+

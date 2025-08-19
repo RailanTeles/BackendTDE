@@ -1,11 +1,13 @@
 from functools import wraps
 from flask import request, jsonify
 from utils.jwt_util import decode_token
+from dao.usuario_dao import UsuarioDao
 
 
 def token_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
+        usuarioDao = UsuarioDao()
         token = request.headers.get('Authorization')
 
         # Verifica se há token
@@ -18,11 +20,13 @@ def token_required(f):
 
         id = decode_token(token)
         if not id:
-            return {"msg": "Usuário não encontrado"}, 401
+            return {"msg": "Token inválido"}, 401
         
         # Verifica se o usuário existe
-        # user = 
-        # if not user:
-        #     return {"msg": "Usuário não encontrado"}, 404
+        user = usuarioDao.obterUsuarioId(id)
+        if not user:
+            return {"msg": "Token inválido"}, 404
+        
+        return f(*args, **kwargs)
 
-        return decorated
+    return decorated

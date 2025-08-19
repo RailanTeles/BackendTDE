@@ -18,7 +18,7 @@ def generate_token(id: int):
     """
 
     payload = {
-        id: id,
+        "id": id,
         "iat": now,
         "exp": now + timedelta(hours=2)
     }
@@ -38,7 +38,7 @@ def decode_token(token: str):
     
     try:
         payload = jwt.decode(token, MINHA_CHAVE_SECRETA, algorithms=['HS256'])
-        return payload[id]
+        return payload["id"]
     except:
         return None
     
