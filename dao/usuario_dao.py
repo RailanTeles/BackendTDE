@@ -69,10 +69,10 @@ class UsuarioDao(Comandos):
             "msg" : "Senha resetada com sucesso"
         }
     
-    def redefinirSenha(self, novaSenha: str, usuario: Usuario):
+    def redefinirSenha(self, novaSenha: str, id: int):
         """Próprio usuário editando sua senha com base no id"""
         self.conectar()
-        self.obterRegistro("UPDATE usuarios SET senha = ? WHERE id = ?", (novaSenha, usuario.id))
+        self.obterRegistro("UPDATE usuarios SET senha = ? WHERE id = ?", (novaSenha, id))
         self.comitar()
         self.desconectar()
         return {

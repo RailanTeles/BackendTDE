@@ -93,3 +93,25 @@ class UsuarioController:
         response = self.usuarioDao.editarUsuario(novasInfos)
 
         return response, 200
+    
+    def alterarSenha(self, token: str, data):
+        idUsuario = decode_token(token)
+
+        senha = data.get('senha')
+        novaSenha = data.get('novaSenha')
+
+        if not senha or not novaSenha:
+            return {
+                "msg" : "A senha antiga e a nova devem ser informadas"
+            }, 400
+        
+        usuario = self.usuarioDao.obterUsuarioId(idUsuario)
+
+        if usuario.get('senha') != senha:
+            return {
+                "msg" : "Senha incorreta"
+            }, 401
+        
+        response = self.usuarioDao.redefinirSenha(novaSenha, idUsuario)
+
+        return response, 200

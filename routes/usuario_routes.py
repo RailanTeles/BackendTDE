@@ -61,3 +61,17 @@ def editarMe():
         return {
             "msg": f"{str(e)}"
         }, 500
+    
+@usuario_routes.route("/api/v1/usuarios/alterarSenha", methods=['PUT'])
+@token_required
+def alterarSenha():
+    """Usuário aletrando a própria senha, informando a antiga e a nova"""
+    try: 
+        token = request.headers.get('Authorization')
+        data = request.get_json()
+        return usuarioController.alterarSenha(token, data)
+    
+    except Exception as e:
+        return {
+            "msg": f"{str(e)}"
+        }, 500
