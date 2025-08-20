@@ -79,10 +79,10 @@ class UsuarioDao(Comandos):
             "msg" : "Senha alterada com sucesso"
         }
     
-    def removerUsuario(self, usuario: Usuario):
+    def removerUsuario(self, email: str):
         """Usuário admin removendo um usuário com base no e-mail"""
         self.conectar()
-        self.obterRegistro("DELETE FROM usuarios WHERE email = ?", (usuario.email,))
+        self.obterRegistro("DELETE FROM usuarios WHERE email = ?", (email,))
         self.comitar()
         self.desconectar()
         return {

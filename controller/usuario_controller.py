@@ -1,11 +1,13 @@
 from flask import request
 from utils.jwt_util import generate_token, decode_token
 from dao.usuario_dao import UsuarioDao
+from dao.atendimento_dao import AtendimentoDao
 from models.usuario import Usuario, TipoUsuario
 
 class UsuarioController:
     def __init__(self):
         self.usuarioDao = UsuarioDao()
+        self.atendimentoDao = AtendimentoDao()
     
     def login(self, data):
         email = data.get('email')
@@ -172,5 +174,36 @@ class UsuarioController:
             }, 404
         
         resposta = self.usuarioDao.resetarSenhaUsuario(email)
+
+        return resposta, 200
+    
+    def removerUsuario(self, token: str, data):
+        idUsuario = decode_token(token)
+
+        usuario = self.usuarioDao.obterUsuarioId(idUsuario)
+
+        if usuario.get('tipo') != TipoUsuario.ADMIN.value:
+            return {
+                "msg": "Acesso negado"
+            }, 403
+        
+        emailRemovido = data.get('email')
+
+        usuarioRemovido = self.usuarioDao.obterUsuarioEmail(emailRemovido)
+
+        if not usuarioRemovido:
+            return {
+                "msg": "Usuário não encontrado"
+            }, 404
+        
+        idDeletado = usuarioRemovido.get('id')
+        atendimentos = self.atendimentoDao.obterQtdAtendimentosUsuario(idDeletado)
+
+        if atendimentos > 0:
+            return {
+                "msg": "Não é possível deletar um usuário com atendimentos vinculados"
+            }, 409
+        
+        resposta = self.usuarioDao.removerUsuario(emailRemovido)
 
         return resposta, 200

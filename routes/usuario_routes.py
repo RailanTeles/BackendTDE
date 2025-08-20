@@ -104,3 +104,17 @@ def resetarSenha():
         return {
             "msg": f"{str(e)}"
         }, 500
+    
+@usuario_routes.route("/api/v1/usuarios/deletar", methods=['DELETE'])
+@token_required
+def deletarUsuario():
+    """Deletar um usuário que não tenha atendimentos vinvulados a ele. Somente admin"""
+    try:
+        token = request.headers.get('Authorization')
+        data = request.get_json()
+        return usuarioController.removerUsuario(token, data)
+    
+    except Exception as e:
+        return {
+            "msg": f"{str(e)}"
+        }, 500
