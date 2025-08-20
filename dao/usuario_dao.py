@@ -58,11 +58,11 @@ class UsuarioDao(Comandos):
             "msg" : "Usuário editado com sucesso"
         }
     
-    def resetarSenhaUsuario(self, usuario: Usuario):
+    def resetarSenhaUsuario(self, email: str):
         """Usuário admin resetar a senha para padrão com base no e-mail"""
         self.conectar()
         senhaPadrao = "123456"
-        self.obterRegistro("UPDATE usuarios SET senha = ? WHERE email = ?", (senhaPadrao, usuario.email))
+        self.obterRegistro("UPDATE usuarios SET senha = ? WHERE email = ?", (senhaPadrao, email))
         self.comitar()
         self.desconectar()
         return {

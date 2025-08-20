@@ -152,3 +152,25 @@ class UsuarioController:
         response = self.usuarioDao.redefinirSenha(novaSenha, idUsuario)
 
         return response, 200
+    
+    def resetarSenha(self, token: str, data):
+        idUsuario = decode_token(token)
+        email = data.get('email')
+
+        usuario = self.usuarioDao.obterUsuarioId(idUsuario)
+
+        if usuario.get('tipo') != TipoUsuario.ADMIN.value:
+            return {
+                "msg": "Acesso negado"
+            }, 403
+        
+        usuarioAlterado = self.usuarioDao.obterUsuarioEmail(email)
+
+        if not usuarioAlterado:
+            return {
+                "msg": "Usuário não encontrado"
+            }, 404
+        
+        resposta = self.usuarioDao.resetarSenhaUsuario(email)
+
+        return resposta, 200
