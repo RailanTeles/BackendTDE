@@ -47,7 +47,22 @@ def obterUsuarios():
         return {
             "msg": f"{str(e)}"
         }, 500
+
+@usuario_routes.route("/api/v1/usuarios/adicionar", methods=['POST'])
+@token_required
+def adicionarUsuario():
+    """Endpoint que adiciona um usuário"""
+    try:
+        token = request.headers.get('Authorization')
+        data = request.get_json()
+
+        return usuarioController.adicionarUsuario(token, data)
     
+    except Exception as e:
+        return {
+            "msg": f"{str(e)}"
+        }, 500
+
 @usuario_routes.route("/api/v1/usuarios/editar", methods=['PUT'])
 @token_required
 def editarMe():
