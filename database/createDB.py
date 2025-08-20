@@ -100,6 +100,41 @@ cursor = conn.cursor()
 #     )
 # """)
 
+# cursor.execute("""
+# INSERT INTO procedimentos (nome, desc, valorPlano, valorParticular) 
+# VALUES ('Limpeza Dental', 'Procedimento de limpeza completa', 100.00, 200.00)
+# """)
+
+# cursor.execute("""
+# INSERT INTO procedimentos (nome, desc, valorPlano, valorParticular) 
+# VALUES ('Obturação', 'Tratamento de cáries com resina', 150.00, 300.00)
+# """)
+
+# cursor.execute("""
+# INSERT INTO pacientes (cpf, nome, email, telefone, dataNascimento) 
+# VALUES ('12345678900', 'João da Silva', 'joao@email.com', '11999999999', '1990-05-20')
+# """)
+
+# cursor.execute("""
+# INSERT INTO atendimentos (data, idPaciente, tipo, numeroPlano, idUsuario, valorTotal) 
+# VALUES ('2025-08-19 10:00:00', 1, 'particular', NULL, 2, 500.00)
+# """)
+
+# cursor.execute("""
+# INSERT INTO Atendimento_Procedimento (idAtendimento, idProcedimento) 
+# VALUES (1, 1)
+# """)
+
+# cursor.execute("""
+# INSERT INTO Atendimento_Procedimento (idAtendimento, idProcedimento) 
+# VALUES (1, 2)
+# """)
+
+# cursor.execute("""
+# INSERT INTO Enderecos (estado, cidade, bairro, cep, rua, numeroCasa, idPaciente)
+# VALUES ('SP', 'São Paulo', 'Centro', '01001-000', 'Rua das Flores', 123, 1)
+# """)
+
 conn.commit()
 cursor.close()
 conn.close()
