@@ -1,10 +1,10 @@
 from flask import Flask, jsonify, request, Blueprint
-from controller.usuario_controller import UsuarioController
+from service.usuario_service import UsuarioService
 from security.notations import token_required
 
 usuario_routes = Blueprint('usuario_routes', __name__)
 
-usuarioController = UsuarioController()
+usuarioService = UsuarioService()
 
 # Rota para Login
 @usuario_routes.route("/api/v1/usuarios/login", methods=['POST'])
@@ -18,7 +18,7 @@ def login():
     """
     try:
         data = request.get_json()
-        return usuarioController.login(data)
+        return usuarioService.login(data)
 
     except Exception as e:
         return {
@@ -34,7 +34,7 @@ def obterUsuario(email):
     """
     try:
         token = request.headers.get('Authorization')
-        return usuarioController.obterUsuario(email, token)
+        return usuarioService.obterUsuario(email, token)
     
     except Exception as e:
         return {
@@ -54,7 +54,7 @@ def obterUsuarios():
         pagina = request.args.get('pagina', default=1, type=int)
         itensPorPagina = request.args.get('itensPorPagina', default=2, type=int)
 
-        return usuarioController.obterUsuarios(token, itensPorPagina, pagina)
+        return usuarioService.obterUsuarios(token, itensPorPagina, pagina)
     
     except Exception as e:
         return {
@@ -76,7 +76,7 @@ def adicionarUsuario():
         token = request.headers.get('Authorization')
         data = request.get_json()
 
-        return usuarioController.adicionarUsuario(token, data)
+        return usuarioService.adicionarUsuario(token, data)
     
     except Exception as e:
         return {
@@ -96,7 +96,7 @@ def editarMe():
     try:
         token = request.headers.get('Authorization')
         data = request.get_json()
-        return usuarioController.editarMe(token, data)
+        return usuarioService.editarMe(token, data)
 
     except Exception as e:
         return {
@@ -116,7 +116,7 @@ def alterarSenha():
     try: 
         token = request.headers.get('Authorization')
         data = request.get_json()
-        return usuarioController.alterarSenha(token, data)
+        return usuarioService.alterarSenha(token, data)
     
     except Exception as e:
         return {
@@ -135,7 +135,7 @@ def resetarSenha():
     try:
         token = request.headers.get('Authorization')
         data = request.get_json()
-        return usuarioController.resetarSenha(token, data)
+        return usuarioService.resetarSenha(token, data)
     
     except Exception as e:
         return {
@@ -155,7 +155,7 @@ def deletarUsuario():
     try:
         token = request.headers.get('Authorization')
         data = request.get_json()
-        return usuarioController.removerUsuario(token, data)
+        return usuarioService.removerUsuario(token, data)
     
     except Exception as e:
         return {

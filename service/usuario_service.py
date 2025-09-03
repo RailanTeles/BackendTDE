@@ -4,7 +4,7 @@ from dao.usuario_dao import UsuarioDao
 from dao.atendimento_dao import AtendimentoDao
 from models.usuario import Usuario, TipoUsuario
 
-class UsuarioController:
+class UsuarioService:
     def __init__(self):
         self.usuarioDao = UsuarioDao()
         self.atendimentoDao = AtendimentoDao()
