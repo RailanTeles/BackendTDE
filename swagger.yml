@@ -1,0 +1,271 @@
+swagger: "2.0"
+info:
+  title: API de Usuários
+  description: API para autenticação, gerenciamento e manutenção de usuários.
+  version: "1.0.0"
+
+host: localhost:5000
+basePath: /
+schemes:
+  - http
+
+tags:
+  - name: Usuários
+    description: Endpoints relacionados a usuários
+
+paths:
+  /api/v1/usuarios/login:
+    post:
+      tags:
+        - Usuários
+      summary: Login de usuário
+      consumes:
+        - application/json
+      parameters:
+        - in: body
+          name: body
+          description: Credenciais do usuário
+          required: true
+          schema:
+            type: object
+            properties:
+              email:
+                type: string
+                example: example@gmail.com
+              senha:
+                type: string
+                example: senha123
+      responses:
+        200:
+          description: Logado com sucesso
+          schema:
+            type: object
+            properties:
+              token:
+                type: string
+              msg:
+                type: string
+                example: Logado com sucesso
+        404:
+          description: E-mail ou senha incorretas
+        500:
+          description: Erro interno
+
+  /api/v1/usuarios/{email}:
+    get:
+      tags:
+        - Usuários
+      summary: Obter informações de um usuário
+      parameters:
+        - name: email
+          in: path
+          required: true
+          type: string
+        - name: Authorization
+          in: header
+          required: true
+          type: string
+      responses:
+        200:
+          description: Usuário encontrado
+          schema:
+            type: object
+            properties:
+              usuario:
+                type: object
+        403:
+          description: Acesso negado
+        404:
+          description: Usuário não encontrado
+        500:
+          description: Erro interno
+
+  /api/v1/usuarios:
+    get:
+      tags:
+        - Usuários
+      summary: Listar usuários de forma paginada
+      parameters:
+        - name: pagina
+          in: query
+          type: integer
+          default: 1
+        - name: itensPorPagina
+          in: query
+          type: integer
+          default: 2
+        - name: Authorization
+          in: header
+          required: true
+          type: string
+      responses:
+        200:
+          description: Lista de usuários retornada
+        403:
+          description: Acesso negado
+        404:
+          description: Index indisponível
+        500:
+          description: Erro interno
+
+  /api/v1/usuarios/adicionar:
+    post:
+      tags:
+        - Usuários
+      summary: Adicionar um novo usuário (somente admin)
+      consumes:
+        - application/json
+      parameters:
+        - name: Authorization
+          in: header
+          required: true
+          type: string
+        - in: body
+          name: body
+          required: true
+          schema:
+            type: object
+            properties:
+              email:
+                type: string
+              nome:
+                type: string
+              tipo:
+                type: string
+      responses:
+        200:
+          description: Usuário criado com sucesso
+        400:
+          description: Campos obrigatórios ausentes ou tipo inválido
+        403:
+          description: Acesso negado
+        409:
+          description: Email já cadastrado
+        500:
+          description: Erro interno
+
+  /api/v1/usuarios/editar:
+    put:
+      tags:
+        - Usuários
+      summary: Editar informações próprias do usuário
+      consumes:
+        - application/json
+      parameters:
+        - name: Authorization
+          in: header
+          required: true
+          type: string
+        - in: body
+          name: body
+          required: true
+          schema:
+            type: object
+            properties:
+              email:
+                type: string
+              nome:
+                type: string
+      responses:
+        200:
+          description: Dados do usuário atualizados
+        400:
+          description: Campos obrigatórios não informados
+        409:
+          description: Email já cadastrado
+        500:
+          description: Erro interno
+
+  /api/v1/usuarios/alterarSenha:
+    put:
+      tags:
+        - Usuários
+      summary: Alterar a própria senha
+      consumes:
+        - application/json
+      parameters:
+        - name: Authorization
+          in: header
+          required: true
+          type: string
+        - in: body
+          name: body
+          required: true
+          schema:
+            type: object
+            properties:
+              senha:
+                type: string
+              novaSenha:
+                type: string
+      responses:
+        200:
+          description: Senha alterada com sucesso
+        400:
+          description: Campos obrigatórios não informados
+        401:
+          description: Senha incorreta
+        500:
+          description: Erro interno
+
+  /api/v1/usuarios/resetarSenha:
+    put:
+      tags:
+        - Usuários
+      summary: Resetar senha de um usuário (somente admin)
+      consumes:
+        - application/json
+      parameters:
+        - name: Authorization
+          in: header
+          required: true
+          type: string
+        - in: body
+          name: body
+          required: true
+          schema:
+            type: object
+            properties:
+              email:
+                type: string
+      responses:
+        200:
+          description: Senha resetada com sucesso
+        403:
+          description: Acesso negado
+        404:
+          description: Usuário não encontrado
+        500:
+          description: Erro interno
+
+  /api/v1/usuarios/deletar:
+    delete:
+      tags:
+        - Usuários
+      summary: Deletar um usuário (somente admin)
+      consumes:
+        - application/json
+      parameters:
+        - name: Authorization
+          in: header
+          required: true
+          type: string
+        - in: body
+          name: body
+          required: true
+          schema:
+            type: object
+            properties:
+              email:
+                type: string
+      responses:
+        200:
+          description: Usuário deletado com sucesso
+        403:
+          description: Acesso negado
+        404:
+          description: Usuário não encontrado
+        409:
+          description: Não é possível deletar usuário com atendimentos vinculados
+        500:
+          description: Erro interno
