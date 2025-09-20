@@ -1,1 +1,6 @@
 flasgger
+flask
+flask_cors
+jwt
+dotenv
+datetime
