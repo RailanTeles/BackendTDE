@@ -13,6 +13,11 @@ class UsuarioService:
         email = data.get('email')
         senha = data.get('senha')
 
+        if not email or senha:
+            return{
+                "msg": "Email e senha são campos obrigatórios"
+            }, 400
+
         usuario = self.usuarioDao.obterUsuarioEmail(email)
 
         if not usuario:
@@ -166,6 +171,11 @@ class UsuarioService:
                 "msg": "Acesso negado"
             }, 403
         
+        if not email:
+            return {
+                "msg" : "O email deve ser informado"
+            }, 400
+        
         usuarioAlterado = self.usuarioDao.obterUsuarioEmail(email)
 
         if not usuarioAlterado:
@@ -188,6 +198,11 @@ class UsuarioService:
             }, 403
         
         emailRemovido = data.get('email')
+
+        if not emailRemovido:
+            return {
+                "msg" : "O email deve ser informado"
+            }, 400
 
         usuarioRemovido = self.usuarioDao.obterUsuarioEmail(emailRemovido)
 

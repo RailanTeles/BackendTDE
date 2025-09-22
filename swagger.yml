@@ -1,7 +1,7 @@
 swagger: "2.0"
 info:
-  title: API de Usuários
-  description: API para autenticação, gerenciamento e manutenção de usuários.
+  title: API de Gestão de Clínicas
+  description: API para gerenciamento de clínica.
   version: "1.0.0"
 
 host: localhost:5000
@@ -46,6 +46,8 @@ paths:
               msg:
                 type: string
                 example: Logado com sucesso
+        400:
+          description: E-mail e senha são campos obrigatórios
         404:
           description: E-mail ou senha incorretas
         500:
@@ -55,7 +57,7 @@ paths:
     get:
       tags:
         - Usuários
-      summary: Obter informações de um usuário
+      summary: Obter informações de um usuário (protegido) (admin)
       parameters:
         - name: email
           in: path
@@ -68,11 +70,16 @@ paths:
       responses:
         200:
           description: Usuário encontrado
-          schema:
-            type: object
-            properties:
+          examples:
+            application/json:
               usuario:
-                type: object
+                    email: admin@consultorio.com
+                    id: 1
+                    nome: admin
+                    senha: admin69
+                    tipo: admin
+        401:
+          description: Não autorizado
         403:
           description: Acesso negado
         404:
@@ -84,7 +91,7 @@ paths:
     get:
       tags:
         - Usuários
-      summary: Listar usuários de forma paginada
+      summary: Listar usuários de forma paginada (protegido) (admin)
       parameters:
         - name: pagina
           in: query
@@ -101,6 +108,25 @@ paths:
       responses:
         200:
           description: Lista de usuários retornada
+          examples:
+            application/json:
+              itensPorPagina: 2
+              pagina: 1
+              totalPaginas: 1
+              usuariosTotais: 2
+              usuarios:
+                - email: admin@consultorio.com
+                  id: 1
+                  nome: admin
+                  senha: admin69
+                  tipo: admin
+                - email: exampledefault@gmail.com
+                  id: 2
+                  nome: default
+                  senha: 123456
+                  tipo: default
+        401:
+          description: Não autorizado
         403:
           description: Acesso negado
         404:
@@ -112,7 +138,7 @@ paths:
     post:
       tags:
         - Usuários
-      summary: Adicionar um novo usuário (somente admin)
+      summary: Adicionar um novo usuário (protegido) (admin)
       consumes:
         - application/json
       parameters:
@@ -132,11 +158,14 @@ paths:
                 type: string
               tipo:
                 type: string
+                enum: [admin, default]
       responses:
         200:
           description: Usuário criado com sucesso
         400:
           description: Campos obrigatórios ausentes ou tipo inválido
+        401:
+          description: Não autorizado
         403:
           description: Acesso negado
         409:
@@ -148,8 +177,8 @@ paths:
     put:
       tags:
         - Usuários
-      summary: Editar informações próprias do usuário
-      consumes:
+      summary: Editar informações próprias do usuário (protegido)
+      consumes: 
         - application/json
       parameters:
         - name: Authorization
@@ -171,6 +200,8 @@ paths:
           description: Dados do usuário atualizados
         400:
           description: Campos obrigatórios não informados
+        401:
+          description: Não autorizado
         409:
           description: Email já cadastrado
         500:
@@ -180,7 +211,7 @@ paths:
     put:
       tags:
         - Usuários
-      summary: Alterar a própria senha
+      summary: Alterar a própria senha (protegido)
       consumes:
         - application/json
       parameters:
@@ -204,6 +235,8 @@ paths:
         400:
           description: Campos obrigatórios não informados
         401:
+          description: Não autorizado
+        401:
           description: Senha incorreta
         500:
           description: Erro interno
@@ -212,7 +245,7 @@ paths:
     put:
       tags:
         - Usuários
-      summary: Resetar senha de um usuário (somente admin)
+      summary: Resetar senha de um usuário (protegido) (admin)
       consumes:
         - application/json
       parameters:
@@ -231,6 +264,10 @@ paths:
       responses:
         200:
           description: Senha resetada com sucesso
+        400:
+          description: Campos obrigatórios não informados
+        401:
+          description: Não autorizado
         403:
           description: Acesso negado
         404:
@@ -242,7 +279,7 @@ paths:
     delete:
       tags:
         - Usuários
-      summary: Deletar um usuário (somente admin)
+      summary: Deletar um usuário (protegido) (admin)
       consumes:
         - application/json
       parameters:
@@ -261,6 +298,10 @@ paths:
       responses:
         200:
           description: Usuário deletado com sucesso
+        400:
+          description: Campos obrigatórios não informados
+        401:
+          description: Não autorizado
         403:
           description: Acesso negado
         404:
