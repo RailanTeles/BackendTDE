@@ -13,7 +13,7 @@ class UsuarioService:
         email = data.get('email')
         senha = data.get('senha')
 
-        if not email or senha:
+        if not email or not senha:
             return{
                 "msg": "Email e senha são campos obrigatórios"
             }, 400
