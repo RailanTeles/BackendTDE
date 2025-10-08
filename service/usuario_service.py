@@ -127,10 +127,11 @@ class UsuarioService:
 
         usuario = self.usuarioDao.obterUsuarioEmail(email)
 
-        if usuario.get('id') != idUsuario:
-            return {
-                "msg" : "Email já cadastrado"
-            }, 409
+        if usuario:
+            if usuario.get('id') != idUsuario:
+                return {
+                    "msg" : "Email já cadastrado"
+                }, 409
 
         novasInfos = Usuario(idUsuario, email, nome, "", "")
 
