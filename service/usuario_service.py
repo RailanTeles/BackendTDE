@@ -23,12 +23,12 @@ class UsuarioService:
         if not usuario:
             return {
                 "msg": "E-mail ou senha incorretas"
-            }, 404
+            }, 401
 
         if senha != usuario.get('senha'):
             return {
                 "msg": "E-mail ou senha incorretas"
-            }, 404
+            }, 401
         
         token = generate_token(usuario.get('id'))
 
