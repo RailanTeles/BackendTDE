@@ -1,6 +1,6 @@
 from datetime import datetime
 
-class Reponsavel:
+class Responsavel:
     def __init__(self, id: int, cpf:str, nome: str, email: str, telefone: str, dataNascimento: str, idPaciente: int):
         self.id = id
         self.cpf = cpf

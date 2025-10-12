@@ -6,6 +6,9 @@ conn = sqlite3.connect(DATABASE_FILE)
 
 cursor = conn.cursor()
 
+# cursor.execute("DELETE FROM responsaveis WHERE idPaciente = 0")
+cursor.execute("DELETE FROM pacientes WHERE id > 1")
+
 # cursor.execute("""
 #     CREATE TABLE Usuarios(
 #         id INTEGER PRIMARY KEY AUTOINCREMENT,
