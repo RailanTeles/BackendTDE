@@ -5,9 +5,12 @@ DATABASE = "./database/data.db"
 class Comandos:
     def conectar(self):
         """Abre a conexão com o banco e configura para retornar dicionários"""
-        self.conn = sqlite3.connect(DATABASE)
+        self.conn = sqlite3.connect(DATABASE, timeout=30)
         self.conn.row_factory = sqlite3.Row
         self.cursor = self.conn.cursor()
+        # Configura WAL mode para evitar locks
+        self.cursor.execute("PRAGMA journal_mode=WAL")
+        self.cursor.execute("PRAGMA synchronous=NORMAL")
 
     def desconectar(self):
         """Fecha cursor e conexão"""

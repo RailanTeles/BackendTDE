@@ -1,89 +1,119 @@
+
 from flask import Blueprint, request, jsonify
-from dao.atendimento_dao import AtendimentoDao
 from security.notations import token_required
 from service.atendimento_service import AtendimentoService
 
+# Blueprint para rotas de atendimentos
 atendimento_routes = Blueprint('atendimento_routes', __name__)
-atendimentoDao = AtendimentoDao()
 atendimentoService = AtendimentoService()
 
-# Criar atendimento
+# =========================
+# Rotas de Atendimento
+# =========================
+
 @atendimento_routes.route('/api/v1/atendimentos', methods=['POST'])
 @token_required
 def criar_atendimento():
-    data = request.get_json()
+    """
+    Cria um novo atendimento.
+    Requer autenticação via token JWT.
+    Apenas administradores podem criar para outros usuários.
+    Valida existência do paciente e regras de negócio no service.
+    """
     try:
-        data_atendimento = data.get('data')
-        paciente_id = data.get('paciente_id')
-        procedimentos = data.get('procedimentos')
-        tipo = data.get('tipo')
-        numero_plano = data.get('numero_plano')
-        usuario_id = data.get('usuario_id')
-        response, status = atendimentoService.criarAtendimento(
-            data_atendimento, paciente_id, procedimentos, tipo, numero_plano, usuario_id
-        )
+        token = request.headers.get('Authorization')
+        data = request.get_json()
+        response, status = atendimentoService.criarAtendimento(token, data)
         return jsonify(response), status
     except Exception as e:
-        return jsonify({'msg': str(e)}), 400
+        return jsonify({'msg': str(e)}), 500
 
-# Listar atendimentos
 @atendimento_routes.route('/api/v1/atendimentos', methods=['GET'])
 @token_required
 def listar_atendimentos():
+    """
+    Lista atendimentos de forma paginada.
+    Requer autenticação via token JWT.
+    Permite filtros de paginação via query params.
+    """
     try:
-        usuario_id = request.args.get('usuario_id', type=int)
-        usuario_tipo = request.args.get('usuario_tipo', type=str)
-        if usuario_tipo == 'admin':
-            atendimentos = atendimentoDao.listarAtendimentos()
-        else:
-            atendimentos = [a for a in atendimentoDao.listarAtendimentos() if a['idUsuario'] == usuario_id]
-        return jsonify(atendimentos), 200
+        token = request.headers.get('Authorization')
+        pagina = request.args.get('pagina', default=1, type=int)
+        itens_por_pagina = request.args.get('itens_por_pagina', default=10, type=int)
+        response, status = atendimentoService.obterAtendimentos(token, pagina, itens_por_pagina)
+        return jsonify(response), status
     except Exception as e:
-        return jsonify({'msg': str(e)}), 400
+        return jsonify({'msg': str(e)}), 500
 
-# Obter atendimento por ID
 @atendimento_routes.route('/api/v1/atendimentos/<int:atendimento_id>', methods=['GET'])
 @token_required
 def obter_atendimento(atendimento_id):
+    """
+    Obtém um atendimento específico pelo ID.
+    Requer autenticação via token JWT.
+    Apenas o dono ou admin pode visualizar.
+    """
     try:
-        atendimento = atendimentoDao.obterAtendimentoPorId(atendimento_id)
-        if not atendimento:
-            return jsonify({'msg': 'Atendimento não encontrado'}), 404
-        return jsonify(atendimento), 200
+        token = request.headers.get('Authorization')
+        response, status = atendimentoService.obterAtendimento(token, atendimento_id)
+        return jsonify(response), status
     except Exception as e:
-        return jsonify({'msg': str(e)}), 400
+        return jsonify({'msg': str(e)}), 500
 
-# Atualizar atendimento
 @atendimento_routes.route('/api/v1/atendimentos/<int:atendimento_id>', methods=['PUT'])
 @token_required
 def atualizar_atendimento(atendimento_id):
-    data = request.get_json()
+    """
+    Atualiza um atendimento existente.
+    Requer autenticação via token JWT.
+    Apenas o dono ou admin pode editar.
+    Valida existência do paciente e regras de negócio no service.
+    """
     try:
-        data_atendimento = data.get('data')
-        paciente_id = data.get('paciente_id')
-        procedimentos = data.get('procedimentos')
-        tipo = data.get('tipo')
-        numero_plano = data.get('numero_plano')
-        usuario_id = data.get('usuario_id')
-        usuario_tipo = data.get('usuario_tipo')
-        response, status = atendimentoService.atualizarAtendimento(
-            atendimento_id, data_atendimento, paciente_id, procedimentos, tipo, numero_plano, usuario_id, usuario_tipo
-        )
+        token = request.headers.get('Authorization')
+        data = request.get_json()
+        response, status = atendimentoService.atualizarAtendimento(token, atendimento_id, data)
         return jsonify(response), status
     except Exception as e:
-        return jsonify({'msg': str(e)}), 400
+        return jsonify({'msg': str(e)}), 500
 
-# Remover atendimento
 @atendimento_routes.route('/api/v1/atendimentos/<int:atendimento_id>', methods=['DELETE'])
 @token_required
 def remover_atendimento(atendimento_id):
-    data = request.get_json()
+    """
+    Remove um atendimento existente.
+    Requer autenticação via token JWT.
+    Apenas o dono ou admin pode remover.
+    """
     try:
-        usuario_id = data.get('usuario_id')
-        usuario_tipo = data.get('usuario_tipo')
-        response, status = atendimentoService.removerAtendimento(
-            atendimento_id, usuario_id, usuario_tipo
-        )
+        token = request.headers.get('Authorization')
+        response, status = atendimentoService.removerAtendimento(token, atendimento_id)
         return jsonify(response), status
     except Exception as e:
-        return jsonify({'msg': str(e)}), 400
+        return jsonify({'msg': str(e)}), 500
+
+
+# Endpoint para listar atendimentos entre datas
+@atendimento_routes.route('/api/v1/atendimentos/<data_inicio>/<data_fim>', methods=['GET'])
+@token_required
+def listar_atendimentos_por_data_paginado(data_inicio, data_fim):
+    """
+    Lista atendimentos entre duas datas informadas (inclusive), paginado.
+    Parâmetros via path:
+      - data_inicio: data inicial (YYYY-MM-DD)
+      - data_fim: data final (YYYY-MM-DD)
+    Parâmetros via query string:
+      - pagina: número da página (opcional, padrão=1)
+      - itens_por_pagina: itens por página (opcional, padrão=10)
+    Exemplo de uso: /api/v1/atendimentos/2025-10-01/2025-10-20?pagina=1&itens_por_pagina=10
+    """
+    try:
+        token = request.headers.get('Authorization')
+        pagina = request.args.get('pagina', default=1, type=int)
+        itens_por_pagina = request.args.get('itens_por_pagina', default=10, type=int)
+        if not data_inicio or not data_fim:
+            return jsonify({'msg': 'Parâmetros data_inicio e data_fim são obrigatórios.'}), 400
+        response, status = atendimentoService.obterAtendimentosPorData(token, data_inicio, data_fim, pagina, itens_por_pagina)
+        return jsonify(response), status
+    except Exception as e:
+        return jsonify({'msg': str(e)}), 500
