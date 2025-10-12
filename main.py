@@ -1,6 +1,7 @@
 from flask import Flask, request
 from flask_cors import CORS
 from routes.usuario_routes import usuario_routes
+from routes.paciente_routes import paciente_routes
 from flasgger import Swagger
 
 app = Flask(__name__)
@@ -10,6 +11,7 @@ CORS(app)
 swagger = Swagger(app, template_file="swagger.yml")
 
 app.register_blueprint(usuario_routes)
+app.register_blueprint(paciente_routes)
 
 # Mostrar a lista de rotas
 print("Lista de Rotas:")

@@ -1,4 +1,3 @@
-from flask import request
 from utils.jwt_util import generate_token, decode_token
 from dao.usuario_dao import UsuarioDao
 from dao.atendimento_dao import AtendimentoDao
