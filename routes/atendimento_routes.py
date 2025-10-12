@@ -1,9 +1,11 @@
 from flask import Blueprint, request, jsonify
 from dao.atendimento_dao import AtendimentoDao
 from security.notations import token_required
+from service.atendimento_service import AtendimentoService
 
 atendimento_routes = Blueprint('atendimento_routes', __name__)
 atendimentoDao = AtendimentoDao()
+atendimentoService = AtendimentoService()
 
 # Criar atendimento
 @atendimento_routes.route('/api/v1/atendimentos', methods=['POST'])
@@ -17,10 +19,10 @@ def criar_atendimento():
         tipo = data.get('tipo')
         numero_plano = data.get('numero_plano')
         usuario_id = data.get('usuario_id')
-        atendimento_id = atendimentoDao.criarAtendimento(
+        response, status = atendimentoService.criarAtendimento(
             data_atendimento, paciente_id, procedimentos, tipo, numero_plano, usuario_id
         )
-        return jsonify({'msg': 'Atendimento criado com sucesso', 'id': atendimento_id}), 201
+        return jsonify(response), status
     except Exception as e:
         return jsonify({'msg': str(e)}), 400
 
@@ -40,7 +42,7 @@ def listar_atendimentos():
         return jsonify({'msg': str(e)}), 400
 
 # Obter atendimento por ID
-@atendimento_routes.route('/api/v1/atendimentos/<id>', methods=['GET'])
+@atendimento_routes.route('/api/v1/atendimentos/<int:atendimento_id>', methods=['GET'])
 @token_required
 def obter_atendimento(atendimento_id):
     try:
@@ -52,7 +54,7 @@ def obter_atendimento(atendimento_id):
         return jsonify({'msg': str(e)}), 400
 
 # Atualizar atendimento
-@atendimento_routes.route('/api/v1/atendimentos/<id>', methods=['PUT'])
+@atendimento_routes.route('/api/v1/atendimentos/<int:atendimento_id>', methods=['PUT'])
 @token_required
 def atualizar_atendimento(atendimento_id):
     data = request.get_json()
@@ -64,22 +66,24 @@ def atualizar_atendimento(atendimento_id):
         numero_plano = data.get('numero_plano')
         usuario_id = data.get('usuario_id')
         usuario_tipo = data.get('usuario_tipo')
-        atendimentoDao.atualizarAtendimento(
+        response, status = atendimentoService.atualizarAtendimento(
             atendimento_id, data_atendimento, paciente_id, procedimentos, tipo, numero_plano, usuario_id, usuario_tipo
         )
-        return jsonify({'msg': 'Atendimento atualizado com sucesso'}), 200
+        return jsonify(response), status
     except Exception as e:
         return jsonify({'msg': str(e)}), 400
 
 # Remover atendimento
-@atendimento_routes.route('/api/v1/atendimentos/<id>', methods=['DELETE'])
+@atendimento_routes.route('/api/v1/atendimentos/<int:atendimento_id>', methods=['DELETE'])
 @token_required
 def remover_atendimento(atendimento_id):
     data = request.get_json()
     try:
         usuario_id = data.get('usuario_id')
         usuario_tipo = data.get('usuario_tipo')
-        atendimentoDao.removerAtendimento(atendimento_id, usuario_id, usuario_tipo)
-        return jsonify({'msg': 'Atendimento removido com sucesso'}), 200
+        response, status = atendimentoService.removerAtendimento(
+            atendimento_id, usuario_id, usuario_tipo
+        )
+        return jsonify(response), status
     except Exception as e:
         return jsonify({'msg': str(e)}), 400

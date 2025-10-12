@@ -4,26 +4,13 @@ from datetime import datetime
 
 class AtendimentoDao(Comandos):
     def obterQtdAtendimentosUsuario(self, id: int):
-        """Verifica se um usuário tem atendimentos pelo id. Retorna a quantidade de atendimentos."""
         self.conectar()
         atends = self.obterRegistro("SELECT COUNT(idUsuario) as total FROM atendimentos WHERE idUsuario=?", (id,))
         self.desconectar()
         return atends.get('total')
 
-    def criarAtendimento(self, data, paciente_id, procedimentos, tipo, numero_plano, usuario_id):
-        if not procedimentos or len(procedimentos) == 0:
-            raise Exception("O atendimento deve possuir pelo menos um procedimento.")
-        if tipo == 'plano' and not numero_plano:
-            raise Exception("Número do plano de saúde é obrigatório para atendimentos do tipo plano.")
-        if tipo == 'particular' and numero_plano:
-            raise Exception("Número do plano de saúde não deve ser informado para atendimentos particulares.")
+    def criarAtendimentoDB(self, data, paciente_id, procedimentos, tipo, numero_plano, usuario_id, valor_total):
         self.conectar()
-        valor_total = 0
-        for proc in procedimentos:
-            if tipo == 'plano':
-                valor_total += proc['valorPlano']
-            else:
-                valor_total += proc['valorParticular']
         atendimento_query = """
             INSERT INTO atendimentos (data, idPaciente, tipo, numeroPlano, idUsuario, valorTotal)
             VALUES (?, ?, ?, ?, ?, ?)
@@ -64,25 +51,8 @@ class AtendimentoDao(Comandos):
         self.desconectar()
         return atendimento
 
-    def atualizarAtendimento(self, atendimento_id, data, paciente_id, procedimentos, tipo, numero_plano, usuario_id, usuario_tipo):
-        atendimento = self.obterAtendimentoPorId(atendimento_id)
-        if not atendimento:
-            raise Exception("Atendimento não encontrado.")
-        if usuario_tipo != 'admin' and atendimento['idUsuario'] != usuario_id:
-            raise Exception("Você não tem permissão para editar este atendimento.")
-        if not procedimentos or len(procedimentos) == 0:
-            raise Exception("O atendimento deve possuir pelo menos um procedimento.")
-        if tipo == 'plano' and not numero_plano:
-            raise Exception("Número do plano de saúde é obrigatório para atendimentos do tipo plano.")
-        if tipo == 'particular' and numero_plano:
-            raise Exception("Número do plano de saúde não deve ser informado para atendimentos particulares.")
+    def atualizarAtendimentoDB(self, atendimento_id, data, paciente_id, procedimentos, tipo, numero_plano, usuario_id, valor_total):
         self.conectar()
-        valor_total = 0
-        for proc in procedimentos:
-            if tipo == 'plano':
-                valor_total += proc['valorPlano']
-            else:
-                valor_total += proc['valorParticular']
         update_query = '''
             UPDATE atendimentos SET data=?, idPaciente=?, tipo=?, numeroPlano=?, idUsuario=?, valorTotal=? WHERE id=?
         '''
@@ -97,12 +67,7 @@ class AtendimentoDao(Comandos):
         self.desconectar()
         return True
 
-    def removerAtendimento(self, atendimento_id, usuario_id, usuario_tipo):
-        atendimento = self.obterAtendimentoPorId(atendimento_id)
-        if not atendimento:
-            raise Exception("Atendimento não encontrado.")
-        if usuario_tipo != 'admin' and atendimento['idUsuario'] != usuario_id:
-            raise Exception("Você não tem permissão para remover este atendimento.")
+    def removerAtendimentoDB(self, atendimento_id):
         self.conectar()
         self.cursor.execute("DELETE FROM Atendimento_Procedimento WHERE idAtendimento=?", (atendimento_id,))
         self.cursor.execute("DELETE FROM atendimentos WHERE id=?", (atendimento_id,))
