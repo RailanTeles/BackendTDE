@@ -18,3 +18,12 @@ class EnderecoDao(Comandos):
         return {
             "msg": "Endereço adicionado com sucesso"
         }
+    
+    def alterarEndereco(self, endereco: Endereco):
+        self.conectar()
+        self.obterRegistro("UPDATE Enderecos SET estado=?, cidade=?, bairro=?, cep=?, rua=?, numeroCasa=? WHERE idPaciente=?", (endereco.estado, endereco.cidade, endereco.bairro, endereco.cep, endereco.rua, endereco.numeroCasa, endereco.idPaciente))
+        self.comitar()
+        self.desconectar()
+        return {
+            "msg": "Endereço alterado com sucesso"
+        }

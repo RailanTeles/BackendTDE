@@ -17,3 +17,12 @@ class ResponsavelDao(Comandos):
         return {
             "msg": "Responsável adicionado com sucesso"
         }
+    
+    def alterarResponsavel(self, responsavel: Responsavel):
+        self.conectar()
+        self.obterRegistro("UPDATE Responsaveis SET cpf=?, nome=?, email=?, telefone=?, dataNascimento=? WHERE idPaciente=?", (responsavel.cpf, responsavel.nome, responsavel.email, responsavel.telefone, responsavel.dataNascimento, responsavel.idPaciente))
+        self.comitar()
+        self.desconectar()
+        return {
+            "msg": "Responsável alterado com sucesso"
+        }
