@@ -79,3 +79,41 @@ def adicionarPaciente():
         return {
             "msg": f"{str(e)}"
         }, 500
+
+#Rota para alterar paciente
+@paciente_routes.route("/api/v1/paciente/<id>", methods=["PUT"])
+@token_required
+def alterarPaciente(id):
+    """
+    Rota para alterar um paciente. Json:{
+        "paciente": {
+            "cpf": "12345678900",
+            "nome": "Nome do Paciente",
+            "email": "email@exemplo.com",
+            "telefone": "11987654321",
+            "dataNascimento": "2000-01-01"
+        },
+        "responsavel": {
+            "cpf": "12345678901",
+            "nome": "Nome do Responsável",
+            "email": "responsavel@exemplo.com",
+            "telefone": "11987654322",
+            "dataNascimento": "1980-01-01"
+        },
+        "endereco": {
+            "estado": "SP",
+            "cidade": "São Paulo",
+            "bairro": "Centro",
+            "cep": "01000-000",
+            "rua": "Rua Exemplo",
+            "numeroCasa": "123"
+        }
+    """
+    try:
+        data = request.get_json()
+        return pacienteService.alterarPaciente(id, data)
+    
+    except Exception as e:
+        return {
+            "msg": f"{str(e)}"
+        }, 500

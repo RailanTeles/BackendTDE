@@ -6,8 +6,7 @@ conn = sqlite3.connect(DATABASE_FILE)
 
 cursor = conn.cursor()
 
-cursor.execute("DELETE FROM pacientes WHERE id > 1")
-cursor.execute("DELETE FROM responsaveis WHERE id > 1")
+# cursor.execute("DELETE FROM enderecos WHERE id IN (SELECT id FROM (SELECT id, ROW_NUMBER() OVER (PARTITION BY idPaciente ORDER BY id) AS rn FROM enderecos) tmp WHERE rn > 1);")
 # cursor.execute("DROP TABLE IF EXISTS Responsaveis")
 
 # cursor.execute("""
