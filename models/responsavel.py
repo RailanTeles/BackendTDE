@@ -14,13 +14,14 @@ class Responsavel:
         """
         Transforma data em string para o bd aceitar.
         """
-        return datetime.strptime(dataNascimento, '%Y-%m-%d')
+        return datetime.strptime(dataNascimento, '%Y-%m-%d').date().strftime('%Y-%m-%d')
     
     def verificarMaiorIdade(self):
         """
         Verifica se a pessoa é de maior. Se sim, retorna true. Se não, false.
         """
         hoje = datetime.now()
-        aniversarioMaiorIdade = self.dataNascimento.replace(year=self.dataNascimento.year + 18)
+        verificarDataNascimento = datetime.strptime(self.dataNascimento, '%Y-%m-%d')
+        aniversarioMaiorIdade = verificarDataNascimento.replace(year=verificarDataNascimento.year + 18)
 
         return hoje > aniversarioMaiorIdade
