@@ -117,3 +117,21 @@ def alterarPaciente(id):
         return {
             "msg": f"{str(e)}"
         }, 500
+    
+
+#Rota para deletar paciente
+@paciente_routes.route("/api/v1/paciente/<id>", methods=["DELETE"])
+@token_required
+def deletarPaciente(id):
+    """
+    Rota para deletar um paciente por id.
+    Um paciente com atendimentos não pode ser deletado.
+    Exemplo: /api/v1/paciente/1
+    """
+    try:
+        return pacienteService.deletarPaciente(id)
+    
+    except Exception as e:
+        return {
+            "msg": f"{str(e)}"
+        }, 500

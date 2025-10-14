@@ -26,3 +26,12 @@ class ResponsavelDao(Comandos):
         return {
             "msg": "Responsável alterado com sucesso"
         }
+    
+    def deletarResponsavel(self, idPaciente: int):
+        self.conectar()
+        self.obterRegistro("DELETE FROM Responsaveis WHERE idPaciente=?", (idPaciente, ))
+        self.comitar()
+        self.desconectar()
+        return {
+            "msg": "Responsável deletado com sucesso"
+        }

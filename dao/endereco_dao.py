@@ -27,3 +27,12 @@ class EnderecoDao(Comandos):
         return {
             "msg": "Endereço alterado com sucesso"
         }
+    
+    def deletarEndereco(self, idPaciente: int):
+        self.conectar()
+        self.obterRegistro("DELETE FROM Enderecos WHERE idPaciente=?", (idPaciente, ))
+        self.comitar()
+        self.desconectar()
+        return {
+            "msg": "Endereço deletado com sucesso"
+        }

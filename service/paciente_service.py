@@ -1,6 +1,7 @@
 from dao.paciente_dao import PacienteDao
 from dao.endereco_dao import EnderecoDao
 from dao.responsavel_dao import ResponsavelDao
+from dao.atendimento_dao import AtendimentoDao
 from models.paciente import Paciente
 from models.endereco import Endereco
 from models.responsavel import Responsavel
@@ -10,6 +11,7 @@ class PacienteService:
         self.pacienteDao = PacienteDao()
         self.enderecoDao = EnderecoDao()
         self.responsavelDao = ResponsavelDao()
+        self.atendimentoDao = AtendimentoDao()
 
     def obterPaciente(self, idPaciente: int):
         pacienteProcurado = self.pacienteDao.obterPacientePorId(idPaciente)
@@ -262,4 +264,27 @@ class PacienteService:
 
         return {
             "msg": "Paciente alterado com sucesso",
+        }, 200
+    
+
+    def deletarPaciente(self, idPaciente: int):
+        idPaciente = int(idPaciente)
+        pacienteBD = self.pacienteDao.obterPacientePorId(idPaciente)
+        if not pacienteBD:
+            return {
+                "msg": "Paciente não encontrado"
+            }, 404
+
+        qtdAtendimentos = self.atendimentoDao.obterQtdAtendimentosPaciente(idPaciente)
+        if qtdAtendimentos and qtdAtendimentos > 0:
+            return {
+                "msg": "Paciente possui atendimentos vinculados e não pode ser deletado"
+            }, 409
+        
+        self.pacienteDao.deletarPaciente(idPaciente)
+        self.enderecoDao.deletarEndereco(idPaciente)
+        self.responsavelDao.deletarResponsavel(idPaciente)
+
+        return {
+            "msg": "Dados do paciente deletados com sucesso",
         }, 200

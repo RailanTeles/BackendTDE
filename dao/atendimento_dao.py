@@ -22,6 +22,14 @@ class AtendimentoDao(Comandos):
         atends = self.obterRegistro("SELECT COUNT(idUsuario) as total FROM atendimentos WHERE idUsuario=?", (id,))
         self.desconectar()
         return atends.get('total')
+    
+    def obterQtdAtendimentosPaciente(self, id: int):
+        """Retorna a quantidade de atendimentos de um paciente."""
+        self.conectar()
+        atends = self.obterRegistro("SELECT COUNT(idPaciente) as total FROM atendimentos WHERE idPaciente=?", (id,))
+        self.desconectar()
+        return atends.get('total')
+    
     def criarAtendimentoDB(self, data, paciente_id, procedimentos, tipo, numero_plano, usuario_id, valor_total):
         """Cria um atendimento e vincula procedimentos."""
         try:

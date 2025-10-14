@@ -65,3 +65,11 @@ class PacienteDao(Comandos):
             "msg": "Usuário alterado com sucesso"
         }
     
+    def deletarPaciente(self, id: int):
+        self.conectar()
+        self.obterRegistro("DELETE FROM Pacientes WHERE id=?", (id, ))
+        self.comitar()
+        self.desconectar()
+        return {
+            "msg": "Usuário deletado com sucesso"
+        }
