@@ -16,7 +16,7 @@ tags:
     description: Endpoints relacionados a pacientes
 
 paths:
-  /api/v1/usuarios/login:
+  /api/v1/login:
     post:
       tags:
         - Usuários
@@ -55,7 +55,7 @@ paths:
         500:
           description: Erro interno
 
-  /api/v1/usuarios/{email}:
+  /api/v1/usuario/{email}:
     get:
       tags:
         - Usuários
@@ -89,7 +89,7 @@ paths:
         500:
           description: Erro interno
 
-  /api/v1/usuarios:
+  /api/v1/usuario:
     get:
       tags:
         - Usuários
@@ -135,8 +135,6 @@ paths:
           description: Index indisponível
         500:
           description: Erro interno
-
-  /api/v1/usuarios/adicionar:
     post:
       tags:
         - Usuários
@@ -174,13 +172,11 @@ paths:
           description: Email já cadastrado
         500:
           description: Erro interno
-
-  /api/v1/usuarios/editar:
     put:
       tags:
         - Usuários
       summary: Editar informações próprias do usuário (protegido)
-      consumes: 
+      consumes:
         - application/json
       parameters:
         - name: Authorization
@@ -208,8 +204,42 @@ paths:
           description: Email já cadastrado
         500:
           description: Erro interno
+    delete:
+      tags:
+        - Usuários
+      summary: Deletar um usuário (protegido) (admin)
+      consumes:
+        - application/json
+      parameters:
+        - name: Authorization
+          in: header
+          required: true
+          type: string
+        - in: body
+          name: body
+          required: true
+          schema:
+            type: object
+            properties:
+              email:
+                type: string
+      responses:
+        200:
+          description: Usuário deletado com sucesso
+        400:
+          description: Campos obrigatórios não informados
+        401:
+          description: Não autorizado
+        403:
+          description: Acesso negado
+        404:
+          description: Usuário não encontrado
+        409:
+          description: Não é possível deletar usuário com atendimentos vinculados
+        500:
+          description: Erro interno
 
-  /api/v1/usuarios/alterarSenha:
+  /api/v1/usuario/alterarSenha:
     put:
       tags:
         - Usuários
@@ -243,7 +273,7 @@ paths:
         500:
           description: Erro interno
 
-  /api/v1/usuarios/resetarSenha:
+  /api/v1/usuario/resetarSenha:
     put:
       tags:
         - Usuários
@@ -274,42 +304,6 @@ paths:
           description: Acesso negado
         404:
           description: Usuário não encontrado
-        500:
-          description: Erro interno
-
-  /api/v1/usuarios/deletar:
-    delete:
-      tags:
-        - Usuários
-      summary: Deletar um usuário (protegido) (admin)
-      consumes:
-        - application/json
-      parameters:
-        - name: Authorization
-          in: header
-          required: true
-          type: string
-        - in: body
-          name: body
-          required: true
-          schema:
-            type: object
-            properties:
-              email:
-                type: string
-      responses:
-        200:
-          description: Usuário deletado com sucesso
-        400:
-          description: Campos obrigatórios não informados
-        401:
-          description: Não autorizado
-        403:
-          description: Acesso negado
-        404:
-          description: Usuário não encontrado
-        409:
-          description: Não é possível deletar usuário com atendimentos vinculados
         500:
           description: Erro interno
 

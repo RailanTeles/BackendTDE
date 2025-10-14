@@ -7,7 +7,7 @@ usuario_routes = Blueprint('usuario_routes', __name__)
 usuarioService = UsuarioService()
 
 # Rota para Login
-@usuario_routes.route("/api/v1/usuarios/login", methods=['POST'])
+@usuario_routes.route("/api/v1/login", methods=['POST'])
 def login():
     """
     Endpoint que recebe um json com os parâmetros "email" e a "senha", e retorna o token
@@ -25,7 +25,7 @@ def login():
             "msg": f"{str(e)}"
         }, 500
 
-@usuario_routes.route("/api/v1/usuarios/<email>", methods=["GET"])
+@usuario_routes.route("/api/v1/usuario/<email>", methods=["GET"])
 @token_required
 def obterUsuario(email):
     """
@@ -41,7 +41,7 @@ def obterUsuario(email):
             "msg": f"{str(e)}"
         }, 500
 
-@usuario_routes.route("/api/v1/usuarios", methods=["GET"])
+@usuario_routes.route("/api/v1/usuario", methods=["GET"])
 @token_required
 def obterUsuarios():
     """
@@ -61,7 +61,7 @@ def obterUsuarios():
             "msg": f"{str(e)}"
         }, 500
 
-@usuario_routes.route("/api/v1/usuarios/adicionar", methods=['POST'])
+@usuario_routes.route("/api/v1/usuario", methods=['POST'])
 @token_required
 def adicionarUsuario():
     """
@@ -83,7 +83,7 @@ def adicionarUsuario():
             "msg": f"{str(e)}"
         }, 500
 
-@usuario_routes.route("/api/v1/usuarios/editar", methods=['PUT'])
+@usuario_routes.route("/api/v1/usuario", methods=['PUT'])
 @token_required
 def editarMe():
     """
@@ -102,8 +102,8 @@ def editarMe():
         return {
             "msg": f"{str(e)}"
         }, 500
-    
-@usuario_routes.route("/api/v1/usuarios/alterarSenha", methods=['PUT'])
+
+@usuario_routes.route("/api/v1/usuario/alterarSenha", methods=['PUT'])
 @token_required
 def alterarSenha():
     """
@@ -123,7 +123,7 @@ def alterarSenha():
             "msg": f"{str(e)}"
         }, 500
     
-@usuario_routes.route("/api/v1/usuarios/resetarSenha", methods=['PUT'])
+@usuario_routes.route("/api/v1/usuario/resetarSenha", methods=['PUT'])
 @token_required
 def resetarSenha():
     """
@@ -142,7 +142,7 @@ def resetarSenha():
             "msg": f"{str(e)}"
         }, 500
     
-@usuario_routes.route("/api/v1/usuarios/deletar", methods=['DELETE'])
+@usuario_routes.route("/api/v1/usuario", methods=['DELETE'])
 @token_required
 def deletarUsuario():
     """
