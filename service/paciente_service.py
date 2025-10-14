@@ -288,3 +288,30 @@ class PacienteService:
         return {
             "msg": "Dados do paciente deletados com sucesso",
         }, 200
+    
+    def deletarResponsavel(self, idPaciente: int):
+        idPaciente = int(idPaciente)
+        pacienteBD = self.pacienteDao.obterPacientePorId(idPaciente)
+        if not pacienteBD:
+            return {
+                "msg": "Paciente não encontrado"
+            }, 404
+
+        responsavelBD = self.responsavelDao.obterResponsavelId(idPaciente)
+        if not responsavelBD:
+            return {
+                "msg": "Responsável não encontrado"
+            }, 404
+
+        paciente = Paciente(id=pacienteBD.get("id"), cpf=pacienteBD.get("cpf"), nome=pacienteBD.get("nome"), email=pacienteBD.get("email"), telefone=pacienteBD.get("telefone"), dataNascimento=pacienteBD.get("dataNascimento"))
+        deMaior = paciente.verificarMaiorIdade()
+        if not deMaior:
+            return {
+                "msg": "Paciente menor de idade, responsável não pode ser deletado"
+            }, 400
+
+        self.responsavelDao.deletarResponsavel(idPaciente)
+
+        return {
+            "msg": "Responsável deletado com sucesso",
+        }, 200

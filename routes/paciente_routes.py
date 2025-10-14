@@ -135,3 +135,21 @@ def deletarPaciente(id):
         return {
             "msg": f"{str(e)}"
         }, 500
+    
+
+#Rota para deletar apenas o responsavel do paciente
+@paciente_routes.route("/api/v1/paciente/<id>/responsavel", methods=["DELETE"])
+@token_required
+def deletarResponsavel(id):
+    """
+    Rota para deletar apenas o responsável do paciente por id.
+    Caso o paciente seja menor de idade, o responsável não pode ser deletado.
+    Exemplo: /api/v1/paciente/1/responsavel
+    """
+    try:
+        return pacienteService.deletarResponsavel(id)
+    
+    except Exception as e:
+        return {
+            "msg": f"{str(e)}"
+        }, 500
