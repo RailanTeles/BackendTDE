@@ -44,6 +44,7 @@ def obterPacientes():
 
 #Rota para adicionar paciente
 @paciente_routes.route("/api/v1/paciente", methods=["POST"])
+@token_required
 def adicionarPaciente():
     """
     Rota para adicionar um novo paciente. Json:
