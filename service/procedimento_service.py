@@ -1,83 +1,84 @@
-# service/procedimento_service.py
-
 from dao.procedimento_dao import ProcedimentoDao
-from models.procedimento import Procedimento
 from dao.atendimento_dao import AtendimentoDao
+from models.procedimento import Procedimento
 
 class ProcedimentoService:
-    def __init__(self):
+    def _init_(self):
         self.procedimentoDao = ProcedimentoDao()
         self.atendimentoDao = AtendimentoDao()
 
-    def _validar_dados(self, data: dict, id_existente: int = None):
-        """
-        Método auxiliar privado para validar e processar os dados de um procedimento.
-        Levanta ValueError em caso de qualquer problema.
-        Retorna os dados limpos e convertidos se tudo estiver correto.
-        """
+    def obterProcedimento(self, id: int):
+        procedimento = self.procedimentoDao.obterProcedimentoPorId(id)
+        if not procedimento:
+            return {"msg": "Procedimento não encontrado"}, 404
+        return procedimento, 200
+
+    def obterProcedimentos(self, itensPorPagina: int, pagina: int):
+        resposta = self.procedimentoDao.obterProcedimentos(itensPorPagina, pagina)
+        if not resposta:
+            return {"msg": "Página não disponível"}, 404
+        return resposta, 200
+
+    def adicionarProcedimento(self, data: dict):
         nome = data.get('nome')
         desc = data.get('desc')
         valorPlano = data.get('valorPlano')
         valorParticular = data.get('valorParticular')
 
-        # 1. Validação de campos obrigatórios
-        if not all([nome, desc, valorPlano is not None, valorParticular is not None]):
-            raise ValueError("Todos os campos são obrigatórios: 'nome', 'desc', 'valorPlano', 'valorParticular'")
+        if not ([nome, desc, valorPlano is not None, valorParticular is not None]):
+            return {"msg": "Os campos 'nome', 'desc', 'valorPlano' e 'valorParticular' são obrigatórios"}, 400
         
-        # 2. Validação e conversão dos valores numéricos
-        try:
-            valor_plano_float = float(valorPlano)
-            valor_particular_float = float(valorParticular)
-        except (TypeError, ValueError):
-            raise ValueError("Os campos 'valorPlano' e 'valorParticular' devem ser números válidos")
-
-        # 3. Validação de valores negativos
+        valor_plano_float = float(valorPlano)
+        valor_particular_float = float(valorParticular)
+        
         if valor_plano_float < 0 or valor_particular_float < 0:
-            raise ValueError("Os valores não podem ser negativos")
+            return {"msg": "Os valores não podem ser negativos"}, 400
 
-        # 4. Validação de nome único
         procedimento_existente = self.procedimentoDao.obterProcedimentoPorNome(nome)
-        # Se um procedimento com esse nome existe E não é o mesmo que estamos editando
-        if procedimento_existente and (id_existente is None or procedimento_existente.get("id") != id_existente):
-            raise ValueError(f"O procedimento com o nome '{nome}' já existe")
-            
-        return nome, desc, valor_plano_float, valor_particular_float
+        if procedimento_existente:
+            return {"msg": f"O procedimento com o nome '{nome}' já existe"}, 409
 
-    def obterProcedimento(self, id: int):
-        procedimento = self.procedimentoDao.obterProcedimentoPorId(id)
-        if not procedimento:
-            raise ValueError("Procedimento não encontrado")
-        return procedimento
-
-    def obterProcedimentos(self, itensPorPagina: int, pagina: int):
-        resposta = self.procedimentoDao.obterProcedimentos(itensPorPagina, pagina)
-        if not resposta:
-            raise ValueError("Página não disponível")
-        return resposta
-
-    def adicionarProcedimento(self, data: dict):
-        # Chama o método de validação. Se algo estiver errado, ele levantará um erro.
-        nome, desc, valor_plano, valor_particular = self._validar_dados(data)
-
-        procedimento = Procedimento(id=0, nome=nome, desc=desc, valorPlano=valor_plano, valorParticular=valor_particular)
-        return self.procedimentoDao.adicionarProcedimento(procedimento)
+        procedimento = Procedimento(id=0, nome=nome, desc=desc, valorPlano=valor_plano_float, valorParticular=valor_particular_float)
+        self.procedimentoDao.adicionarProcedimento(procedimento)
+        
+        return {"msg": "Procedimento adicionado com sucesso"}, 201
 
     def alterarProcedimento(self, id: int, data: dict):
-        if not self.procedimentoDao.obterProcedimentoPorId(id):
-            raise ValueError("Procedimento não encontrado")
+        procedimento_atual = self.procedimentoDao.obterProcedimentoPorId(id)
+        if not procedimento_atual:
+            return {"msg": "Procedimento não encontrado"}, 404
 
-        # Chama o método de validação, passando o ID do procedimento que estamos editando
-        nome, desc, valor_plano, valor_particular = self._validar_dados(data, id_existente=id)
+        nome = data.get('nome')
+        desc = data.get('desc')
+        valorPlano = data.get('valorPlano')
+        valorParticular = data.get('valorParticular')
 
-        procedimento_editado = Procedimento(id=id, nome=nome, desc=desc, valorPlano=valor_plano, valorParticular=valor_particular)
-        return self.procedimentoDao.alterarProcedimento(procedimento_editado)
+        if not ([nome, desc, valorPlano is not None, valorParticular is not None]):
+            return {"msg": "Os campos 'nome', 'desc', 'valorPlano' e 'valorParticular' são obrigatórios"}, 400
+            
+        valor_plano_float = float(valorPlano)
+        valor_particular_float = float(valorParticular)
+        
+        if valor_plano_float < 0 or valor_particular_float < 0:
+            return {"msg": "Os valores não podem ser negativos"}, 400
+
+        procedimento_existente = self.procedimentoDao.obterProcedimentoPorNome(nome)
+        if procedimento_existente and procedimento_existente.get("id") != id:
+            return {"msg": f"Já existe outro procedimento com o nome '{nome}'"}, 409
+
+        procedimento_editado = Procedimento(id=id, nome=nome, desc=desc, valorPlano=valor_plano_float, valorParticular=valor_particular_float)
+        self.procedimentoDao.alterarProcedimento(procedimento_editado)
+        
+        return {"msg": "Procedimento alterado com sucesso"}, 200
 
     def deletarProcedimento(self, id: int):
-        if not self.procedimentoDao.obterProcedimentoPorId(id):
-            raise ValueError("Procedimento não encontrado")
+        procedimento = self.procedimentoDao.obterProcedimentoPorId(id)
+        if not procedimento:
+            return {"msg": "Procedimento não encontrado"}, 404
 
-        atendimentos_usando = self.atendimentoDao.verificarUsoDoProcedimento(id)
-        if atendimentos_usando > 0:
-            raise ValueError("Este procedimento está vinculado a atendimentos e não pode ser removido.")
+        atendimento_com_procedimento = self.atendimentoDao.verificarProcedimentoEmUso(id)
+        if atendimento_com_procedimento:
+            return {"msg": "Não é possível remover um procedimento que foi utilizado em algum atendimento"}, 409
 
-        return self.procedimentoDao.deletarProcedimento(id)
+        self.procedimentoDao.deletarProcedimento(id)
+        return {"msg": "Procedimento deletado com sucesso"}, 200
