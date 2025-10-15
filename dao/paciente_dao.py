@@ -56,4 +56,20 @@ class PacienteDao(Comandos):
             "msg": "Usuário adicionado com sucesso"
         }
 
+    def alterarPaciente(self, paciente: Paciente):
+        self.conectar()
+        self.obterRegistro("UPDATE Pacientes SET cpf=?, nome=?, email=?, telefone=?, dataNascimento=? WHERE id=?", (paciente.cpf, paciente.nome, paciente.email, paciente.telefone, paciente.dataNascimento, paciente.id))
+        self.comitar()
+        self.desconectar()
+        return {
+            "msg": "Usuário alterado com sucesso"
+        }
     
+    def deletarPaciente(self, id: int):
+        self.conectar()
+        self.obterRegistro("DELETE FROM Pacientes WHERE id=?", (id, ))
+        self.comitar()
+        self.desconectar()
+        return {
+            "msg": "Usuário deletado com sucesso"
+        }

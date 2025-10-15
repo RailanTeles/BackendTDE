@@ -6,8 +6,8 @@ conn = sqlite3.connect(DATABASE_FILE)
 
 cursor = conn.cursor()
 
-# cursor.execute("DELETE FROM responsaveis WHERE idPaciente = 0")
-cursor.execute("DELETE FROM pacientes WHERE id = 10")
+# cursor.execute("DELETE FROM enderecos WHERE id IN (SELECT id FROM (SELECT id, ROW_NUMBER() OVER (PARTITION BY idPaciente ORDER BY id) AS rn FROM enderecos) tmp WHERE rn > 1);")
+# cursor.execute("DROP TABLE IF EXISTS Responsaveis")
 
 # cursor.execute("""
 #     CREATE TABLE Usuarios(
@@ -48,21 +48,21 @@ cursor.execute("DELETE FROM pacientes WHERE id = 10")
 #     )
 # """)
 
-cursor.execute("""
-    CREATE TABLE Responsaveis(
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        cpf VARCHAR(11) NOT NULL,
-        nome VARCHAR(255) NOT NULL,
-        dataNascimento DATE NOT NULL,
-        email VARCHAR(255) NOT NULL,
-        telefone VARCHAR(20) NOT NULL,
-        idPaciente INTEGER NOT NULL,
+# cursor.execute("""
+#     CREATE TABLE Responsaveis(
+#         id INTEGER PRIMARY KEY AUTOINCREMENT,
+#         cpf VARCHAR(11) NOT NULL,
+#         nome VARCHAR(255) NOT NULL,
+#         dataNascimento DATE NOT NULL,
+#         email VARCHAR(255) NOT NULL,
+#         telefone VARCHAR(20) NOT NULL,
+#         idPaciente INTEGER NOT NULL,
                
-        FOREIGN KEY (idPaciente) REFERENCES pacientes(id)
-    )
-""")
+#         FOREIGN KEY (idPaciente) REFERENCES pacientes(id)
+#     )
+# """)
 
-cursor.execute("INSERT INTO Responsaveis (cpf, nome, email, telefone, dataNascimento, idPaciente) VALUES ('12345678901', 'Maria da Silva', 'maria@email.com', '11999999999', '1985-06-15', 7)")
+# cursor.execute("INSERT INTO Responsaveis (cpf, nome, email, telefone, dataNascimento, idPaciente) VALUES ('12345678901', 'Maria da Silva', 'maria@email.com', '11999999999', '1985-06-15', 1)")
 
 # cursor.execute("""
 #     CREATE TABLE Procedimentos(

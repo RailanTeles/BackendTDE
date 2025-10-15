@@ -12,9 +12,11 @@ schemes:
 tags:
   - name: Usuários
     description: Endpoints relacionados a usuários
+  - name: Pacientes
+    description: Endpoints relacionados a pacientes
 
 paths:
-  /api/v1/usuarios/login:
+  /api/v1/login:
     post:
       tags:
         - Usuários
@@ -53,7 +55,7 @@ paths:
         500:
           description: Erro interno
 
-  /api/v1/usuarios/{email}:
+  /api/v1/usuario/{email}:
     get:
       tags:
         - Usuários
@@ -87,7 +89,7 @@ paths:
         500:
           description: Erro interno
 
-  /api/v1/usuarios:
+  /api/v1/usuario:
     get:
       tags:
         - Usuários
@@ -133,8 +135,6 @@ paths:
           description: Index indisponível
         500:
           description: Erro interno
-
-  /api/v1/usuarios/adicionar:
     post:
       tags:
         - Usuários
@@ -172,13 +172,11 @@ paths:
           description: Email já cadastrado
         500:
           description: Erro interno
-
-  /api/v1/usuarios/editar:
     put:
       tags:
         - Usuários
       summary: Editar informações próprias do usuário (protegido)
-      consumes: 
+      consumes:
         - application/json
       parameters:
         - name: Authorization
@@ -206,8 +204,42 @@ paths:
           description: Email já cadastrado
         500:
           description: Erro interno
+    delete:
+      tags:
+        - Usuários
+      summary: Deletar um usuário (protegido) (admin)
+      consumes:
+        - application/json
+      parameters:
+        - name: Authorization
+          in: header
+          required: true
+          type: string
+        - in: body
+          name: body
+          required: true
+          schema:
+            type: object
+            properties:
+              email:
+                type: string
+      responses:
+        200:
+          description: Usuário deletado com sucesso
+        400:
+          description: Campos obrigatórios não informados
+        401:
+          description: Não autorizado
+        403:
+          description: Acesso negado
+        404:
+          description: Usuário não encontrado
+        409:
+          description: Não é possível deletar usuário com atendimentos vinculados
+        500:
+          description: Erro interno
 
-  /api/v1/usuarios/alterarSenha:
+  /api/v1/usuario/alterarSenha:
     put:
       tags:
         - Usuários
@@ -241,7 +273,7 @@ paths:
         500:
           description: Erro interno
 
-  /api/v1/usuarios/resetarSenha:
+  /api/v1/usuario/resetarSenha:
     put:
       tags:
         - Usuários
@@ -275,11 +307,64 @@ paths:
         500:
           description: Erro interno
 
-  /api/v1/usuarios/deletar:
-    delete:
+  /api/v1/paciente:
+    get:
       tags:
-        - Usuários
-      summary: Deletar um usuário (protegido) (admin)
+        - Pacientes
+      summary: Listar pacientes de forma paginada (protegido)
+      parameters:
+        - name: pagina
+          in: query
+          type: integer
+          default: 1
+        - name: itensPorPagina
+          in: query
+          type: integer
+          default: 2
+        - name: Authorization
+          in: header
+          required: true
+          type: string
+      responses:
+        200:
+          description: Lista de pacientes retornada
+          examples:
+            application/json:
+              pagina: 1
+              totalPaginas: 1
+              itensPorPagina: 2
+              pacientesTotais: 2
+              pacientes:
+                - dados:
+                    id: 1
+                    cpf: 12345678900
+                    nome: João da Silva
+                    email: joao@email.com
+                    telefone: 11999999999
+                    dataNascimento: 1990-05-20
+                  endereco:
+                    estado: SP
+                    cidade: São Paulo
+                    bairro: Centro
+                    cep: 01001-000
+                    rua: Rua das Flores
+                    numeroCasa: 123
+                  responsavel:
+                    cpf: 12345678901
+                    nome: Maria da Silva
+                    email: maria@email.com
+                    telefone: 11999999998
+                    dataNascimento: 1985-06-15
+        401:
+          description: Não autorizado
+        404:
+          description: Página solicitada não disponível
+        500:
+          description: Erro interno
+    post:
+      tags:
+        - Pacientes
+      summary: Adicionar um novo paciente (protegido)
       consumes:
         - application/json
       parameters:
@@ -293,20 +378,248 @@ paths:
           schema:
             type: object
             properties:
-              email:
-                type: string
+              paciente:
+                type: object
+                required:
+                  - cpf
+                  - nome
+                  - email
+                  - telefone
+                  - dataNascimento
+                properties:
+                  cpf:
+                    type: string
+                  nome:
+                    type: string
+                  email:
+                    type: string
+                  telefone:
+                    type: string
+                  dataNascimento:
+                    type: string
+                    format: date
+              responsavel:
+                type: object
+                properties:
+                  cpf:
+                    type: string
+                  nome:
+                    type: string
+                  email:
+                    type: string
+                  telefone:
+                    type: string
+                  dataNascimento:
+                    type: string
+                    format: date
+              endereco:
+                type: object
+                required:
+                  - estado
+                  - cidade
+                  - bairro
+                  - cep
+                  - rua
+                  - numeroCasa
+                properties:
+                  estado:
+                    type: string
+                  cidade:
+                    type: string
+                  bairro:
+                    type: string
+                  cep:
+                    type: string
+                  rua:
+                    type: string
+                  numeroCasa:
+                    type: integer
+          examples:
+            application/json:
+              paciente:
+                cpf: 12345678900
+                nome: João da Silva
+                email: joao@email.com
+                telefone: 11999999999
+                dataNascimento: 1990-05-20
+              responsavel:
+                cpf: 12345678901
+                nome: Maria da Silva
+                email: maria@email.com
+                telefone: 11999999998
+                dataNascimento: 1985-06-15
+              endereco:
+                estado: SP
+                cidade: São Paulo
+                bairro: Centro
+                cep: 01001-000
+                rua: Rua das Flores
+                numeroCasa: 123
       responses:
         200:
-          description: Usuário deletado com sucesso
+          description: Paciente criado com sucesso
         400:
           description: Campos obrigatórios não informados
         401:
           description: Não autorizado
-        403:
-          description: Acesso negado
-        404:
-          description: Usuário não encontrado
         409:
-          description: Não é possível deletar usuário com atendimentos vinculados
+          description: CPF ou e-mail já cadastrado
+        500:
+          description: Erro interno
+
+  /api/v1/paciente/{id}:
+    get:
+      tags:
+        - Pacientes
+      summary: Obter paciente por id (protegido)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          type: integer
+        - name: Authorization
+          in: header
+          required: true
+          type: string
+      responses:
+        200:
+          description: Paciente encontrado
+          examples:
+            application/json:
+              paciente:
+                id: 1
+                cpf: 12345678900
+                nome: João da Silva
+                email: joao@email.com
+                telefone: 11999999999
+                dataNascimento: 1990-05-20
+              endereco:
+                estado: SP
+                cidade: São Paulo
+                bairro: Centro
+                cep: 01001-000
+                rua: Rua das Flores
+                numeroCasa: 123
+              responsavel:
+                cpf: 12345678901
+                nome: Maria da Silva
+                email: maria@email.com
+                telefone: 11999999998
+                dataNascimento: 1985-06-15
+        401:
+          description: Não autorizado
+        404:
+          description: Paciente não encontrado
+        500:
+          description: Erro interno
+    put:
+      tags:
+        - Pacientes
+      summary: Alterar um paciente (protegido)
+      consumes:
+        - application/json
+      parameters:
+        - name: id
+          in: path
+          required: true
+          type: integer
+        - name: Authorization
+          in: header
+          required: true
+          type: string
+        - in: body
+          name: body
+          required: true
+          schema:
+            type: object
+            properties:
+              paciente:
+                type: object
+              responsavel:
+                type: object
+              endereco:
+                type: object
+          examples:
+            application/json:
+              paciente:
+                cpf: 12345678900
+                nome: João da Silva
+                email: joao@email.com
+                telefone: 11999999999
+                dataNascimento: 1990-05-20
+              responsavel:
+                cpf: 12345678901
+                nome: Maria da Silva
+                email: maria@email.com
+                telefone: 11999999998
+                dataNascimento: 1985-06-15
+              endereco:
+                estado: SP
+                cidade: São Paulo
+                bairro: Centro
+                cep: 01001-000
+                rua: Rua das Flores
+                numeroCasa: 123
+      responses:
+        200:
+          description: Paciente alterado com sucesso
+        400:
+          description: Campos obrigatórios não informados
+        401:
+          description: Não autorizado
+        404:
+          description: Paciente não encontrado
+        409:
+          description: CPF ou e-mail já cadastrado
+        500:
+          description: Erro interno
+    delete:
+      tags:
+        - Pacientes
+      summary: Deletar um paciente (protegido)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          type: integer
+        - name: Authorization
+          in: header
+          required: true
+          type: string
+      responses:
+        200:
+          description: Paciente deletado com sucesso
+        401:
+          description: Não autorizado
+        404:
+          description: Paciente não encontrado
+        409:
+          description: Paciente possui atendimentos vinculados
+        500:
+          description: Erro interno
+
+  /api/v1/paciente/{id}/responsavel:
+    delete:
+      tags:
+        - Pacientes
+      summary: Deletar responsável de um paciente (protegido)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          type: integer
+        - name: Authorization
+          in: header
+          required: true
+          type: string
+      responses:
+        200:
+          description: Responsável deletado com sucesso
+        401:
+          description: Não autorizado
+        404:
+          description: Responsável não encontrado
+        409:
+          description: Paciente menor de idade não pode ficar sem responsável
         500:
           description: Erro interno
