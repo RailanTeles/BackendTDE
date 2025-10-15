@@ -34,7 +34,6 @@ class AtendimentoDao(Comandos):
         atends = self.obterRegistro("SELECT COUNT(idUsuario) as total FROM atendimentos WHERE idUsuario=?", (id_usuario,))
         self.desconectar()
         return atends.get('total')
-<<<<<<< HEAD
 
     def obter_total_atendimentos(self, usuario_id=None):
         """Retorna total de atendimentos, opcionalmente filtrados por usuário."""
@@ -58,17 +57,6 @@ class AtendimentoDao(Comandos):
         self.desconectar()
         return result.get('total') if result else 0
     def criar_atendimento_db(self, data, paciente_id, procedimentos, tipo, numero_plano, usuario_id, valor_total):
-=======
-    
-    def obterQtdAtendimentosPaciente(self, id: int):
-        """Retorna a quantidade de atendimentos de um paciente."""
-        self.conectar()
-        atends = self.obterRegistro("SELECT COUNT(idPaciente) as total FROM atendimentos WHERE idPaciente=?", (id,))
-        self.desconectar()
-        return atends.get('total')
-    
-    def criarAtendimentoDB(self, data, paciente_id, procedimentos, tipo, numero_plano, usuario_id, valor_total):
->>>>>>> 118647b4325a230f311a867af23cc26e7e9ab662
         """Cria um atendimento e vincula procedimentos."""
         self.conectar()
         self.cursor.execute(
