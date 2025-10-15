@@ -1,22 +1,26 @@
+# dao/procedimento_dao.py
+
 import math
 from utils.comandos_sql import Comandos
 from models.procedimento import Procedimento
 
 class ProcedimentoDao(Comandos):
-
     def obterProcedimentoPorId(self, id: int):
+        """Obter procedimento com base no id"""
         self.conectar()
         procedimento = self.obterRegistro("SELECT * FROM Procedimentos WHERE id=?", (id, ))
         self.desconectar()
         return procedimento
     
     def obterProcedimentoPorNome(self, nome: str):
+        """Obter procedimento com base no nome"""
         self.conectar()
         procedimento = self.obterRegistro("SELECT * FROM Procedimentos WHERE nome=?", (nome, ))
         self.desconectar()
         return procedimento
     
     def obterProcedimentos(self, itensPorPagina: int, pagina: int):
+        """Obter todos os procedimentos com paginação"""
         self.conectar()
         desvio = itensPorPagina * (pagina - 1)
         procedimentos = self.obterRegistros("SELECT * FROM Procedimentos ORDER BY nome ASC LIMIT ? OFFSET ?", (itensPorPagina, desvio))
@@ -39,7 +43,6 @@ class ProcedimentoDao(Comandos):
     def adicionarProcedimento(self, procedimento: Procedimento):
         """Adiciona um novo procedimento ao banco de dados"""
         self.conectar()
-        
         self.obterRegistro("INSERT INTO Procedimentos (nome, desc, valorPlano, valorParticular) VALUES (?, ?, ?, ?)", 
                            (procedimento.nome, procedimento.desc, procedimento.valorPlano, procedimento.valorParticular))
         self.comitar()
@@ -49,7 +52,6 @@ class ProcedimentoDao(Comandos):
     def alterarProcedimento(self, procedimento: Procedimento):
         """Altera os dados de um procedimento existente"""
         self.conectar()
-        
         self.obterRegistro("UPDATE Procedimentos SET nome=?, desc=?, valorPlano=?, valorParticular=? WHERE id=?", 
                            (procedimento.nome, procedimento.desc, procedimento.valorPlano, procedimento.valorParticular, procedimento.id))
         self.comitar()
