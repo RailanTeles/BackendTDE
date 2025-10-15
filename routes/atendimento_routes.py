@@ -5,11 +5,8 @@ from service.atendimento_service import AtendimentoService
 
 # Blueprint para rotas de atendimentos
 atendimento_routes = Blueprint('atendimento_routes', __name__)
-atendimentoService = AtendimentoService()
+atendimento_service = AtendimentoService()
 
-# =========================
-# Rotas de Atendimento
-# =========================
 
 @atendimento_routes.route('/api/v1/atendimentos', methods=['POST'])
 @token_required
@@ -23,8 +20,8 @@ def criar_atendimento():
     try:
         token = request.headers.get('Authorization')
         data = request.get_json()
-        response, status = atendimentoService.criarAtendimento(token, data)
-        return jsonify(response), status
+        resposta, status = atendimento_service.criar_atendimento(token, data)
+        return jsonify(resposta), status
     except Exception as e:
         return jsonify({'msg': str(e)}), 500
 
@@ -39,9 +36,11 @@ def listar_atendimentos():
     try:
         token = request.headers.get('Authorization')
         pagina = request.args.get('pagina', default=1, type=int)
-        itens_por_pagina = request.args.get('itens_por_pagina', default=10, type=int)
-        response, status = atendimentoService.obterAtendimentos(token, pagina, itens_por_pagina)
-        return jsonify(response), status
+        itensPorPagina = request.args.get('itensPorPagina', default=None, type=int)
+        itens_por_pagina_legacy = request.args.get('itens_por_pagina', default=None, type=int)
+        itens = itensPorPagina if itensPorPagina is not None else (itens_por_pagina_legacy if itens_por_pagina_legacy is not None else 10)
+        resposta, status = atendimento_service.obter_atendimentos(token, pagina, itens)
+        return jsonify(resposta), status
     except Exception as e:
         return jsonify({'msg': str(e)}), 500
 
@@ -55,8 +54,8 @@ def obter_atendimento(atendimento_id):
     """
     try:
         token = request.headers.get('Authorization')
-        response, status = atendimentoService.obterAtendimento(token, atendimento_id)
-        return jsonify(response), status
+        resposta, status = atendimento_service.obter_atendimento(token, atendimento_id)
+        return jsonify(resposta), status
     except Exception as e:
         return jsonify({'msg': str(e)}), 500
 
@@ -72,8 +71,8 @@ def atualizar_atendimento(atendimento_id):
     try:
         token = request.headers.get('Authorization')
         data = request.get_json()
-        response, status = atendimentoService.atualizarAtendimento(token, atendimento_id, data)
-        return jsonify(response), status
+        resposta, status = atendimento_service.atualizar_atendimento(token, atendimento_id, data)
+        return jsonify(resposta), status
     except Exception as e:
         return jsonify({'msg': str(e)}), 500
 
@@ -87,8 +86,8 @@ def remover_atendimento(atendimento_id):
     """
     try:
         token = request.headers.get('Authorization')
-        response, status = atendimentoService.removerAtendimento(token, atendimento_id)
-        return jsonify(response), status
+        resposta, status = atendimento_service.remover_atendimento(token, atendimento_id)
+        return jsonify(resposta), status
     except Exception as e:
         return jsonify({'msg': str(e)}), 500
 
@@ -110,10 +109,12 @@ def listar_atendimentos_por_data_paginado(data_inicio, data_fim):
     try:
         token = request.headers.get('Authorization')
         pagina = request.args.get('pagina', default=1, type=int)
-        itens_por_pagina = request.args.get('itens_por_pagina', default=10, type=int)
+        itensPorPagina = request.args.get('itensPorPagina', default=None, type=int)
+        itens_por_pagina_legacy = request.args.get('itens_por_pagina', default=None, type=int)
+        itens = itensPorPagina if itensPorPagina is not None else (itens_por_pagina_legacy if itens_por_pagina_legacy is not None else 10)
         if not data_inicio or not data_fim:
             return jsonify({'msg': 'Parâmetros data_inicio e data_fim são obrigatórios.'}), 400
-        response, status = atendimentoService.obterAtendimentosPorData(token, data_inicio, data_fim, pagina, itens_por_pagina)
-        return jsonify(response), status
+        resposta, status = atendimento_service.obter_atendimentos_por_data(token, data_inicio, data_fim, pagina, itens)
+        return jsonify(resposta), status
     except Exception as e:
         return jsonify({'msg': str(e)}), 500
