@@ -1,55 +1,88 @@
-
-
-from flask import Blueprint, jsonify, request
-from service.procedimento_service import ProcedimentoService
+from flask import Blueprint, request, jsonify, g
 from security.notations import token_required
 
 procedimento_routes = Blueprint('procedimento_routes', __name__)
-procedimentoService = ProcedimentoService()
 
+def get_procedimento_service():
+    """SEMPRE importar localmente para evitar circular imports"""
+    from service.procedimento_service import ProcedimentoService
+    return ProcedimentoService()
 
-@procedimento_routes.route("/api/v1/procedimento", methods=["POST"])
-@token_required
-def adicionar_procedimento():
+def verificar_admin():
+    user = g.user
+    return user and user.get("tipo") == "admin"
 
-    try:
-        data = request.get_json()
-        return procedimentoService.adicionarProcedimento(data)
-    except Exception as e:
-        return {"msg": str(e)}, 500
-
-@procedimento_routes.route("/api/v1/procedimento/<int:id>", methods=["PUT"])
-@token_required
-def alterar_procedimento(id):
-    try:
-        data = request.get_json()
-        return procedimentoService.alterarProcedimento(id, data)
-    except Exception as e:
-        return {"msg": str(e)}, 500
-
-
-@procedimento_routes.route("/api/v1/procedimento/<int:id>", methods=["GET"])
-@token_required
-def obter_procedimento(id):
-    try:
-        return procedimentoService.obterProcedimento(id)
-    except Exception as e:
-        return {"msg": str(e)}, 500
-
-@procedimento_routes.route("/api/v1/procedimento", methods=["GET"])
+@procedimento_routes.route("/api/v1/procedimentos", methods=["GET"])
 @token_required
 def obter_procedimentos():
     try:
         pagina = request.args.get('pagina', default=1, type=int)
-        itensPorPagina = request.args.get('itensPorPagina', default=10, type=int)
-        return procedimentoService.obterProcedimentos(itensPorPagina, pagina)
-    except Exception as e:
-        return {"msg": str(e)}, 500
+        itens_por_pagina = request.args.get('itensPorPagina', default=10, type=int)
 
-@procedimento_routes.route("/api/v1/procedimento/<int:id>", methods=["DELETE"])
+        service = get_procedimento_service()
+        resultado, status = service.obterProcedimentos(itens_por_pagina, pagina)
+        return jsonify(resultado), status
+
+    except Exception as e:
+        return jsonify({"msg": f"Erro interno do servidor: {str(e)}"}), 500
+
+@procedimento_routes.route("/api/v1/procedimentos/<int:id>", methods=["GET"])
+@token_required
+def obter_procedimento(id):
+    try:
+        service = get_procedimento_service()
+        resultado, status = service.obterProcedimento(id)
+        return jsonify(resultado), status
+
+    except Exception as e:
+        return jsonify({"msg": f"Erro interno do servidor: {str(e)}"}), 500
+
+@procedimento_routes.route("/api/v1/procedimentos", methods=["POST"])
+@token_required
+def adicionar_procedimento():
+    try:
+        if not verificar_admin():
+            return jsonify({"msg": "Apenas administradores podem realizar esta ação."}), 403
+
+        dados = request.get_json()
+        if not dados:
+            return jsonify({"msg": "Dados JSON são obrigatórios."}), 400
+
+        service = get_procedimento_service()
+        resultado, status = service.adicionarProcedimento(dados)
+        return jsonify(resultado), status
+
+    except Exception as e:
+        return jsonify({"msg": f"Erro interno do servidor: {str(e)}"}), 500
+
+@procedimento_routes.route("/api/v1/procedimentos/<int:id>", methods=["PUT"])
+@token_required
+def alterar_procedimento(id):
+    try:
+        if not verificar_admin():
+            return jsonify({"msg": "Apenas administradores podem realizar esta ação."}), 403
+
+        dados = request.get_json()
+        if not dados:
+            return jsonify({"msg": "Dados JSON são obrigatórios."}), 400
+
+        service = get_procedimento_service()
+        resultado, status = service.alterarProcedimento(id, dados)
+        return jsonify(resultado), status
+
+    except Exception as e:
+        return jsonify({"msg": f"Erro interno do servidor: {str(e)}"}), 500
+
+@procedimento_routes.route("/api/v1/procedimentos/<int:id>", methods=["DELETE"])
 @token_required
 def deletar_procedimento(id):
     try:
-        return procedimentoService.deletarProcedimento(id)
+        if not verificar_admin():
+            return jsonify({"msg": "Apenas administradores podem realizar esta ação."}), 403
+
+        service = get_procedimento_service()
+        resultado, status = service.deletarProcedimento(id)
+        return jsonify(resultado), status
+
     except Exception as e:
-        return {"msg": str(e)}, 500
+        return jsonify({"msg": f"Erro interno do servidor: {str(e)}"}), 500
