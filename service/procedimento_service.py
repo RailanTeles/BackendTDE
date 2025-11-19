@@ -3,65 +3,82 @@ from dao.atendimento_dao import AtendimentoDao
 from models.procedimento import Procedimento
 
 class ProcedimentoService:
-    def __init__(self):
+    def _init_(self):
         self.procedimentoDao = ProcedimentoDao()
         self.atendimentoDao = AtendimentoDao()
 
-    def obter_procedimento(self, id: int):
+    def obterProcedimento(self, id: int):
         procedimento = self.procedimentoDao.obterProcedimentoPorId(id)
         if not procedimento:
-            raise ValueError(f"Procedimento com ID {id} não encontrado.")
-        return procedimento
+            return {"msg": "Procedimento não encontrado"}, 404
+        return procedimento, 200
 
-    def obter_procedimento_por_nome(self, nome: str):
-        procedimento = self.procedimentoDao.obterProcedimentoPorNome(nome)
-        if not procedimento:
-            raise ValueError(f"Procedimento com nome '{nome}' não encontrado.")
-        return procedimento
+    def obterProcedimentos(self, itensPorPagina: int, pagina: int):
+        resposta = self.procedimentoDao.obterProcedimentos(itensPorPagina, pagina)
+        if not resposta:
+            return {"msg": "Página não disponível"}, 404
+        return resposta, 200
 
-    def listar_procedimentos(self, itens_por_pagina: int = 10, pagina: int = 1):
-        resultado = self.procedimentoDao.obterProcedimentos(itens_por_pagina, pagina)
-        if not resultado:
-            raise ValueError(f"A página {pagina} está fora do limite de resultados disponíveis.")
-        return resultado
+    def adicionarProcedimento(self, data: dict):
+        nome = data.get('nome')
+        desc = data.get('desc')
+        valorPlano = data.get('valorPlano')
+        valorParticular = data.get('valorParticular')
 
-    def adicionar_procedimento(self, dados: dict):
-        procedimento = Procedimento(**dados)
-        return self.procedimentoDao.adicionarProcedimento(procedimento)
+        if not ([nome, desc, valorPlano is not None, valorParticular is not None]):
+            return {"msg": "Os campos 'nome', 'desc', 'valorPlano' e 'valorParticular' são obrigatórios"}, 400
+        
+        valor_plano_float = float(valorPlano)
+        valor_particular_float = float(valorParticular)
+        
+        if valor_plano_float < 0 or valor_particular_float < 0:
+            return {"msg": "Os valores não podem ser negativos"}, 400
 
-    def alterar_procedimento(self, id: int, dados: dict):
-        procedimento_existente = self.procedimentoDao.obterProcedimentoPorId(id)
-        if not procedimento_existente:
-            raise ValueError(f"Procedimento com ID {id} não encontrado.")
+        procedimento_existente = self.procedimentoDao.obterProcedimentoPorNome(nome)
+        if procedimento_existente:
+            return {"msg": f"O procedimento com o nome '{nome}' já existe"}, 409
 
-        procedimento = Procedimento(
-            id=id,
-            nome=dados.get("nome", procedimento_existente["nome"]),
-            desc=dados.get("desc", procedimento_existente["desc"]),
-            valorPlano=dados.get("valorPlano", procedimento_existente["valorPlano"]),
-            valorParticular=dados.get("valorParticular", procedimento_existente["valorParticular"])
-        )
+        procedimento = Procedimento(id=0, nome=nome, desc=desc, valorPlano=valor_plano_float, valorParticular=valor_particular_float)
+        self.procedimentoDao.adicionarProcedimento(procedimento)
+        
+        return {"msg": "Procedimento adicionado com sucesso"}, 201
 
-        return self.procedimentoDao.alterarProcedimento(procedimento)
+    def alterarProcedimento(self, id: int, data: dict):
+        procedimento_atual = self.procedimentoDao.obterProcedimentoPorId(id)
+        if not procedimento_atual:
+            return {"msg": "Procedimento não encontrado"}, 404
 
-    def deletar_procedimento(self, id: int):
+        nome = data.get('nome')
+        desc = data.get('desc')
+        valorPlano = data.get('valorPlano')
+        valorParticular = data.get('valorParticular')
+
+        if not ([nome, desc, valorPlano is not None, valorParticular is not None]):
+            return {"msg": "Os campos 'nome', 'desc', 'valorPlano' e 'valorParticular' são obrigatórios"}, 400
+            
+        valor_plano_float = float(valorPlano)
+        valor_particular_float = float(valorParticular)
+        
+        if valor_plano_float < 0 or valor_particular_float < 0:
+            return {"msg": "Os valores não podem ser negativos"}, 400
+
+        procedimento_existente = self.procedimentoDao.obterProcedimentoPorNome(nome)
+        if procedimento_existente and procedimento_existente.get("id") != id:
+            return {"msg": f"Já existe outro procedimento com o nome '{nome}'"}, 409
+
+        procedimento_editado = Procedimento(id=id, nome=nome, desc=desc, valorPlano=valor_plano_float, valorParticular=valor_particular_float)
+        self.procedimentoDao.alterarProcedimento(procedimento_editado)
+        
+        return {"msg": "Procedimento alterado com sucesso"}, 200
+
+    def deletarProcedimento(self, id: int):
         procedimento = self.procedimentoDao.obterProcedimentoPorId(id)
         if not procedimento:
-            raise ValueError(f"Procedimento com ID {id} não encontrado.")
-        return self.procedimentoDao.deletarProcedimento(id)
+            return {"msg": "Procedimento não encontrado"}, 404
 
-    def listar_procedimentos_por_atendimento(self, atendimento_id: int):
-        atendimento = self.atendimentoDao.obter_atendimento_por_id(atendimento_id)
-        if not atendimento:
-            raise ValueError(f"Atendimento com ID {atendimento_id} não encontrado.")
+        atendimento_com_procedimento = self.atendimentoDao.verificarProcedimentoEmUso(id)
+        if atendimento_com_procedimento:
+            return {"msg": "Não é possível remover um procedimento que foi utilizado em algum atendimento"}, 409
 
-        procedimentos_ids = []
-        if atendimento.get("procedimentos"):
-            procedimentos_ids = [int(pid) for pid in atendimento["procedimentos"].split(",")]
-
-        procedimentos = [
-            self.procedimentoDao.obterProcedimentoPorId(proc_id)
-            for proc_id in procedimentos_ids
-        ]
-
-        return [p for p in procedimentos if p]
+        self.procedimentoDao.deletarProcedimento(id)
+        return {"msg": "Procedimento deletado com sucesso"}, 200
