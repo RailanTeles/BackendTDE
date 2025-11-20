@@ -1,10 +1,9 @@
 class ProcedimentoService:
     def __init__(self):
         print("✅ ProcedimentoService inicializado!")
-        # NÃO inicializar DAOs aqui
 
     def _get_dao(self):
-        """Método interno para obter DAO - SEMPRE importar localmente"""
+        """Método interno para obter DAO"""
         from dao.procedimento_dao import ProcedimentoDao
         return ProcedimentoDao()
 
@@ -33,8 +32,7 @@ class ProcedimentoService:
 
     def adicionarProcedimento(self, dados: dict):
         try:
-            from models.procedimento import Procedimento
-            
+            # Validações básicas
             nome = dados.get("nome", "").strip()
             descricao = dados.get("descricao", "").strip()
             valorPlano = dados.get("valorPlano")
@@ -55,19 +53,20 @@ class ProcedimentoService:
                 return {"msg": "Campos 'valorPlano' e 'valorParticular' devem ser números válidos."}, 400
 
             dao = self._get_dao()
+            
+            # Verificar se já existe procedimento com mesmo nome
             existente = dao.obterProcedimentoPorNome(nome)
             if existente:
                 return {"msg": "Já existe um procedimento com esse nome."}, 409
 
-            novo_procedimento = Procedimento(
-                id=None,
-                nome=nome,
-                descricao=descricao,
-                valorPlano=valorPlano,
-                valorParticular=valorParticular
-            )
-
-            resultado = dao.adicionarProcedimento(novo_procedimento)
+            # Adicionar procedimento
+            resultado = dao.adicionarProcedimento({
+                "nome": nome,
+                "descricao": descricao,
+                "valorPlano": valorPlano,
+                "valorParticular": valorParticular
+            })
+            
             return resultado, 201
 
         except Exception as e:
@@ -75,8 +74,6 @@ class ProcedimentoService:
 
     def alterarProcedimento(self, id: int, dados: dict):
         try:
-            from models.procedimento import Procedimento
-            
             if not id or id <= 0:
                 return {"msg": "ID do procedimento é obrigatório."}, 400
 
@@ -85,6 +82,7 @@ class ProcedimentoService:
             if not existente:
                 return {"msg": f"Procedimento ID {id} não encontrado."}, 404
 
+            # ... resto do método igual ao anterior
             nome_novo = dados.get("nome", "").strip()
             descricao_novo = dados.get("descricao", "").strip()
             valorPlano_novo = dados.get("valorPlano")
@@ -114,15 +112,13 @@ class ProcedimentoService:
             if outro_procedimento and outro_procedimento.get("id") != id:
                 return {"msg": "Já existe outro procedimento com esse nome."}, 409
 
-            procedimento = Procedimento(
-                id=id,
-                nome=nome_novo,
-                descricao=descricao_novo,
-                valorPlano=valorPlano_novo,
-                valorParticular=valorParticular_novo
-            )
-
-            dao.alterarProcedimento(procedimento)
+            dao.alterarProcedimento(id, {
+                "nome": nome_novo,
+                "descricao": descricao_novo,
+                "valorPlano": valorPlano_novo,
+                "valorParticular": valorParticular_novo
+            })
+            
             return {"msg": "Procedimento alterado com sucesso."}, 200
 
         except Exception as e:

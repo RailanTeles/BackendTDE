@@ -75,20 +75,20 @@ class ProcedimentoDao(Comandos):
         finally:
             self.desconectar()
 
-    def adicionarProcedimento(self, procedimento: Procedimento):
+    def adicionarProcedimento(self, dados: dict):
         try:
             self.conectar()
             self.cursor.execute(
                 """
                 INSERT INTO Procedimentos
-                (nome, descricao, valorPlano, valorParticular)
+                (nome, desc, valorPlano, valorParticular)  -- ⭐ MUDOU: descricao → desc
                 VALUES (?, ?, ?, ?)
                 """,
                 (
-                    procedimento.nome,
-                    procedimento.descricao,
-                    procedimento.valorPlano,
-                    procedimento.valorParticular
+                    dados["nome"],
+                    dados["descricao"],  # ⭐ Mantém o mesmo nome no dicionário
+                    dados["valorPlano"],
+                    dados["valorParticular"]
                 )
             )
             self.comitar()
@@ -100,21 +100,21 @@ class ProcedimentoDao(Comandos):
         finally:
             self.desconectar()
 
-    def alterarProcedimento(self, procedimento: Procedimento):
+    def alterarProcedimento(self, id: int, dados: dict):
         try:
             self.conectar()
             self.cursor.execute(
                 """
                 UPDATE Procedimentos
-                SET nome = ?, descricao = ?, valorPlano = ?, valorParticular = ?
+                SET nome = ?, desc = ?, valorPlano = ?, valorParticular = ?  -- ⭐ MUDOU: descricao → desc
                 WHERE id = ?
                 """,
                 (
-                    procedimento.nome,
-                    procedimento.descricao,
-                    procedimento.valorPlano,
-                    procedimento.valorParticular,
-                    procedimento.id
+                    dados["nome"],
+                    dados["descricao"],  # ⭐ Mantém o mesmo nome no dicionário
+                    dados["valorPlano"],
+                    dados["valorParticular"],
+                    id
                 )
             )
             self.comitar()

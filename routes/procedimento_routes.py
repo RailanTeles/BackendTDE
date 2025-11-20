@@ -9,8 +9,28 @@ def get_procedimento_service():
     return ProcedimentoService()
 
 def verificar_admin():
-    user = g.user
-    return user and user.get("tipo") == "admin"
+    try:
+        # O token contém apenas o ID, então precisamos buscar o usuário no banco
+        user_id = g.get("user_id")
+        if not user_id:
+            print("❌ Nenhum user_id encontrado no contexto")
+            return False
+        
+        # Buscar informações do usuário no banco - usando SEU método
+        from dao.usuario_dao import UsuarioDao
+        usuario_dao = UsuarioDao()
+        usuario = usuario_dao.obterUsuarioId(user_id)  # SEU MÉTODO obterUsuarioId
+        
+        if not usuario:
+            print("❌ Usuário não encontrado no banco de dados")
+            return False
+        
+        print(f"🔍 Tipo de usuário: {usuario.get('tipo')}")
+        return usuario.get("tipo") == "admin"
+        
+    except Exception as e:
+        print(f"❌ Erro ao verificar admin: {str(e)}")
+        return False
 
 @procedimento_routes.route("/api/v1/procedimentos", methods=["GET"])
 @token_required
