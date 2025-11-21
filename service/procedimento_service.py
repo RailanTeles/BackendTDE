@@ -21,7 +21,7 @@ class ProcedimentoService:
         try:
             if not id or id <= 0:
                 return {"msg": "ID do procedimento é obrigatório."}, 400
-            
+
             dao = self._get_dao()
             proc = dao.obterProcedimentoPorId(id)
             if not proc:
@@ -34,13 +34,16 @@ class ProcedimentoService:
         try:
             # Validações básicas
             nome = dados.get("nome", "").strip()
-            descricao = dados.get("descricao", "").strip()
+            desc = dados.get("desc", "").strip()  # CORRETO: "desc"
             valorPlano = dados.get("valorPlano")
             valorParticular = dados.get("valorParticular")
 
+            print(f"📥 Dados recebidos no Service: {dados}")  # DEBUG
+            print(f"📥 Descrição recebida: '{desc}'")  # DEBUG
+
             if not nome:
                 return {"msg": "O campo 'nome' é obrigatório."}, 400
-            
+
             if valorPlano is None or valorParticular is None:
                 return {"msg": "Campos 'valorPlano' e 'valorParticular' são obrigatórios."}, 400
 
@@ -53,20 +56,24 @@ class ProcedimentoService:
                 return {"msg": "Campos 'valorPlano' e 'valorParticular' devem ser números válidos."}, 400
 
             dao = self._get_dao()
-            
+
             # Verificar se já existe procedimento com mesmo nome
             existente = dao.obterProcedimentoPorNome(nome)
             if existente:
                 return {"msg": "Já existe um procedimento com esse nome."}, 409
 
-            # Adicionar procedimento
-            resultado = dao.adicionarProcedimento({
+            # Adicionar procedimento - CORRETO: usando "desc"
+            dados_para_dao = {
                 "nome": nome,
-                "descricao": descricao,
+                "desc": desc,  # CORRETO: "desc"
                 "valorPlano": valorPlano,
                 "valorParticular": valorParticular
-            })
+            }
             
+            print(f"📤 Dados enviados para DAO: {dados_para_dao}")  # DEBUG
+            
+            resultado = dao.adicionarProcedimento(dados_para_dao)
+
             return resultado, 201
 
         except Exception as e:
@@ -82,16 +89,15 @@ class ProcedimentoService:
             if not existente:
                 return {"msg": f"Procedimento ID {id} não encontrado."}, 404
 
-            # ... resto do método igual ao anterior
             nome_novo = dados.get("nome", "").strip()
-            descricao_novo = dados.get("descricao", "").strip()
+            desc_novo = dados.get("desc", "").strip()  # CORRETO: "desc"
             valorPlano_novo = dados.get("valorPlano")
             valorParticular_novo = dados.get("valorParticular")
 
             if not nome_novo:
                 nome_novo = existente.get("nome", "").strip()
-            if not descricao_novo:
-                descricao_novo = existente.get("descricao", "").strip()
+            if not desc_novo:
+                desc_novo = existente.get("desc", "").strip()  # CORRETO: "desc"
             if valorPlano_novo is None:
                 valorPlano_novo = existente.get("valorPlano")
             if valorParticular_novo is None:
@@ -112,13 +118,15 @@ class ProcedimentoService:
             if outro_procedimento and outro_procedimento.get("id") != id:
                 return {"msg": "Já existe outro procedimento com esse nome."}, 409
 
-            dao.alterarProcedimento(id, {
+            dados_para_dao = {
                 "nome": nome_novo,
-                "descricao": descricao_novo,
+                "desc": desc_novo,  # CORRETO: "desc"
                 "valorPlano": valorPlano_novo,
                 "valorParticular": valorParticular_novo
-            })
+            }
             
+            dao.alterarProcedimento(id, dados_para_dao)
+
             return {"msg": "Procedimento alterado com sucesso."}, 200
 
         except Exception as e:

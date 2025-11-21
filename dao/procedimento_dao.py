@@ -1,6 +1,5 @@
 import math
 from utils.comandos_sql import Comandos
-from models.procedimento import Procedimento
 
 class ProcedimentoDao(Comandos):
     def __init__(self):
@@ -77,16 +76,18 @@ class ProcedimentoDao(Comandos):
 
     def adicionarProcedimento(self, dados: dict):
         try:
+            print(f"📥 Dados recebidos no DAO: {dados}")  # DEBUG
+            
             self.conectar()
             self.cursor.execute(
                 """
                 INSERT INTO Procedimentos
-                (nome, desc, valorPlano, valorParticular)  -- ⭐ MUDOU: descricao → desc
+                (nome, desc, valorPlano, valorParticular)
                 VALUES (?, ?, ?, ?)
                 """,
                 (
                     dados["nome"],
-                    dados["descricao"],  # ⭐ Mantém o mesmo nome no dicionário
+                    dados["desc"],  # CORRETO: "desc"
                     dados["valorPlano"],
                     dados["valorParticular"]
                 )
@@ -102,16 +103,18 @@ class ProcedimentoDao(Comandos):
 
     def alterarProcedimento(self, id: int, dados: dict):
         try:
+            print(f"📥 Dados recebidos no DAO para alteração: {dados}")  # DEBUG
+            
             self.conectar()
             self.cursor.execute(
                 """
                 UPDATE Procedimentos
-                SET nome = ?, desc = ?, valorPlano = ?, valorParticular = ?  -- ⭐ MUDOU: descricao → desc
+                SET nome = ?, desc = ?, valorPlano = ?, valorParticular = ?
                 WHERE id = ?
                 """,
                 (
                     dados["nome"],
-                    dados["descricao"],  # ⭐ Mantém o mesmo nome no dicionário
+                    dados["desc"],  # CORRETO: "desc"
                     dados["valorPlano"],
                     dados["valorParticular"],
                     id
