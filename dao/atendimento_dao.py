@@ -10,7 +10,14 @@ class AtendimentoDao(Comandos):
         """Lista atendimentos entre datas, com paginação e filtro opcional por usuário."""
         self.conectar()
         query = '''
-            SELECT a.*, GROUP_CONCAT(ap.idProcedimento) as procedimentos
+            SELECT a.id, a.data, a.tipo, a.numeroPlano, a.idPaciente, a.idUsuario,
+                   GROUP_CONCAT(ap.idProcedimento) as procedimentos,
+                   (
+                       SELECT COALESCE(SUM(CASE WHEN a.tipo = 'plano' THEN p.valorPlano ELSE p.valorParticular END), 0)
+                       FROM Atendimento_Procedimento ap2
+                       JOIN Procedimentos p ON ap2.idProcedimento = p.id
+                       WHERE ap2.idAtendimento = a.id
+                   ) as valorTotal
             FROM atendimentos a
             LEFT JOIN Atendimento_Procedimento ap ON a.id = ap.idAtendimento
             WHERE date(a.data) BETWEEN date(?) AND date(?)'''
@@ -25,6 +32,14 @@ class AtendimentoDao(Comandos):
         '''
         params.extend([limit, offset])
         itens = self.obterRegistros(query, tuple(params))
+        # Normalizar campo 'procedimentos' (GROUP_CONCAT retorna CSV) para lista de inteiros
+        if itens:
+            for item in itens:
+                procs = item.get('procedimentos')
+                if procs is None:
+                    item['procedimentos'] = []
+                else:
+                    item['procedimentos'] = [int(x) for x in str(procs).split(',') if str(x).strip() != '']
         self.desconectar()
         return itens
 
@@ -83,7 +98,14 @@ class AtendimentoDao(Comandos):
         """Lista atendimentos com paginação opcional, opcionalmente filtrados por usuário."""
         self.conectar()
         query = '''
-            SELECT a.*, GROUP_CONCAT(ap.idProcedimento) as procedimentos
+            SELECT a.id, a.data, a.tipo, a.numeroPlano, a.idPaciente, a.idUsuario,
+                   GROUP_CONCAT(ap.idProcedimento) as procedimentos,
+                   (
+                       SELECT COALESCE(SUM(CASE WHEN a.tipo = 'plano' THEN p.valorPlano ELSE p.valorParticular END), 0)
+                       FROM Atendimento_Procedimento ap2
+                       JOIN Procedimentos p ON ap2.idProcedimento = p.id
+                       WHERE ap2.idAtendimento = a.id
+                   ) as valorTotal
             FROM atendimentos a
             LEFT JOIN Atendimento_Procedimento ap ON a.id = ap.idAtendimento'''
         params = []
@@ -95,6 +117,14 @@ class AtendimentoDao(Comandos):
             query += ' LIMIT ? OFFSET ?'
             params.extend([limit, offset])
         itens = self.obterRegistros(query, tuple(params)) if params else self.obterRegistros(query)
+        # Normalizar campo 'procedimentos' para lista
+        if itens:
+            for item in itens:
+                procs = item.get('procedimentos')
+                if procs is None:
+                    item['procedimentos'] = []
+                else:
+                    item['procedimentos'] = [int(x) for x in str(procs).split(',') if str(x).strip() != '']
         self.desconectar()
         return itens
 
@@ -102,13 +132,27 @@ class AtendimentoDao(Comandos):
         """Obtém um atendimento pelo ID."""
         self.conectar()
         query = '''
-            SELECT a.*, GROUP_CONCAT(ap.idProcedimento) as procedimentos
+            SELECT a.id, a.data, a.tipo, a.numeroPlano, a.idPaciente, a.idUsuario,
+                   GROUP_CONCAT(ap.idProcedimento) as procedimentos,
+                   (
+                       SELECT COALESCE(SUM(CASE WHEN a.tipo = 'plano' THEN p.valorPlano ELSE p.valorParticular END), 0)
+                       FROM Atendimento_Procedimento ap2
+                       JOIN Procedimentos p ON ap2.idProcedimento = p.id
+                       WHERE ap2.idAtendimento = a.id
+                   ) as valorTotal
             FROM atendimentos a
             LEFT JOIN Atendimento_Procedimento ap ON a.id = ap.idAtendimento
             WHERE a.id = ?
             GROUP BY a.id
         '''
         atendimento = self.obterRegistro(query, (atendimento_id,))
+        # Converter procedimentos para lista de inteiros
+        if atendimento:
+            procs = atendimento.get('procedimentos')
+            if procs is None:
+                atendimento['procedimentos'] = []
+            else:
+                atendimento['procedimentos'] = [int(x) for x in str(procs).split(',') if str(x).strip() != '']
         self.desconectar()
         return atendimento
 

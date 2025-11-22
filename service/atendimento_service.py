@@ -2,6 +2,7 @@ from utils.jwt_util import decode_token
 from dao.atendimento_dao import AtendimentoDao
 from dao.usuario_dao import UsuarioDao
 from dao.paciente_dao import PacienteDao
+from dao.procedimento_dao import ProcedimentoDao
 from models.usuario import TipoUsuario
 from datetime import datetime, date
 import calendar
@@ -11,6 +12,7 @@ class AtendimentoService:
         self.atendimento_dao = AtendimentoDao()
         self.usuario_dao = UsuarioDao()
         self.paciente_dao = PacienteDao()
+        self.procedimento_dao = ProcedimentoDao()
 
     @staticmethod
     def _parse_date_safe(value: str):
@@ -188,22 +190,22 @@ class AtendimentoService:
         if not paciente:
             return {"msg": f"Paciente com ID {paciente_id} não encontrado."}, 404
 
-        # Calcular valor total e validar chaves dos procedimentos
-        valor_total = 0
+        # Validar existência dos procedimentos (apenas IDs são necessários)
         for proc in procedimentos:
-            if tipo == 'plano':
-                if 'valorPlano' not in proc:
-                    return {"msg": "Todos os procedimentos devem ter 'valorPlano' para atendimentos do tipo plano."}, 400
-                valor_total += proc['valorPlano']
-            else:
-                if 'valorParticular' not in proc:
-                    return {"msg": "Todos os procedimentos devem ter 'valorParticular' para atendimentos particulares."}, 400
-                valor_total += proc['valorParticular']
+            proc_id = proc.get('id')
+            procedimento = self.procedimento_dao.obterProcedimentoPorId(proc_id)
+            if not procedimento:
+                return {"msg": f"Procedimento com ID {proc_id} não encontrado."}, 404
 
+        # Criar atendimento (valorTotal será consultado dinamicamente nas consultas)
         atendimento_id = self.atendimento_dao.criar_atendimento_db(
-            data, paciente_id, procedimentos, tipo, numero_plano, usuario_id_destino, valor_total
+            data, paciente_id, procedimentos, tipo, numero_plano, usuario_id_destino, 0
         )
-        return {"msg": "Atendimento criado com sucesso", "id": atendimento_id["id"] if isinstance(atendimento_id, dict) else atendimento_id}, 201
+
+        # Recuperar atendimento recém-criado com valorTotal calculado por SUM
+        new_id = atendimento_id["id"] if isinstance(atendimento_id, dict) else atendimento_id
+        atendimento = self.atendimento_dao.obter_atendimento_por_id(new_id)
+        return {"msg": "Atendimento criado com sucesso", "id": new_id, "atendimento": atendimento}, 201
 
     def atualizar_atendimento(self, token: str, atendimento_id: int, data_request):
         usuario_id = decode_token(token)
@@ -269,27 +271,25 @@ class AtendimentoService:
         if not paciente:
             return {"msg": f"Paciente com ID {paciente_id} não encontrado."}, 404
 
-        # Calcular valor total e validar chaves dos procedimentos
-        valor_total = 0
+        # Validar existência dos procedimentos (apenas IDs são necessários)
         for proc in procedimentos:
-            if tipo == 'plano':
-                if 'valorPlano' not in proc:
-                    return {"msg": "Todos os procedimentos devem ter 'valorPlano' para atendimentos do tipo plano."}, 400
-                valor_total += proc['valorPlano']
-            else:
-                if 'valorParticular' not in proc:
-                    return {"msg": "Todos os procedimentos devem ter 'valorParticular' para atendimentos particulares."}, 400
-                valor_total += proc['valorParticular']
+            proc_id = proc.get('id')
+            procedimento = self.procedimento_dao.obterProcedimentoPorId(proc_id)
+            if not procedimento:
+                return {"msg": f"Procedimento com ID {proc_id} não encontrado."}, 404
 
         self.atendimento_dao.atualizar_atendimento_db(
-            atendimento_id, data, paciente_id, procedimentos, tipo, numero_plano, novo_usuario_id, valor_total
+            atendimento_id, data, paciente_id, procedimentos, tipo, numero_plano, novo_usuario_id, 0
         )
+
+        # Recuperar atendimento atualizado com valorTotal calculado por SUM
+        atendimento_atualizado = self.atendimento_dao.obter_atendimento_por_id(atendimento_id)
 
         # Mensagem personalizada se houve transferência
         if novo_usuario_id != atendimento.get('idUsuario'):
-            return {"msg": f"Atendimento transferido para usuário {novo_usuario_id} e atualizado com sucesso"}, 200
+            return {"msg": f"Atendimento transferido para usuário {novo_usuario_id} e atualizado com sucesso", "atendimento": atendimento_atualizado}, 200
         else:
-            return {"msg": "Atendimento atualizado com sucesso"}, 200
+            return {"msg": "Atendimento atualizado com sucesso", "atendimento": atendimento_atualizado}, 200
 
     def remover_atendimento(self, token: str, atendimento_id: int):
         # Extrai automaticamente o ID do usuário do token

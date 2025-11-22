@@ -14,6 +14,8 @@ tags:
     description: Endpoints relacionados a usuários
   - name: Pacientes
     description: Endpoints relacionados a pacientes
+  - name: Atendimentos
+    description: Endpoints relacionados a atendimentos
 
 paths:
   /api/v1/login:
@@ -621,5 +623,303 @@ paths:
           description: Responsável não encontrado
         409:
           description: Paciente menor de idade não pode ficar sem responsável
+        500:
+          description: Erro interno
+
+  /api/v1/atendimentos:
+    post:
+      tags:
+        - Atendimentos
+      summary: Criar um novo atendimento (protegido)
+      consumes:
+        - application/json
+      parameters:
+        - name: Authorization
+          in: header
+          required: true
+          type: string
+        - in: body
+          name: body
+          required: true
+          schema:
+            $ref: '#/definitions/AtendimentoCreate'
+          examples:
+            application/json:
+              data: 2025-10-10T10:00:00
+              paciente_id: 1
+              procedimentos:
+                - id: 1
+                  nome: Limpeza Dental
+                  desc: Procedimento de limpeza completa
+                  valorPlano: 100.0
+                  valorParticular: 200.0
+              tipo: particular
+              numero_plano: null
+              usuario_id: 1
+              valor_total: 200.0
+      responses:
+        200:
+          description: Atendimento criado com sucesso
+          examples:
+            application/json:
+              atendimento:
+                id: 1
+                data: 2025-10-10T10:00:00
+                paciente_id: 1
+                procedimentos:
+                  - id: 1
+                    nome: Limpeza Dental
+                    desc: Procedimento de limpeza completa
+                    valorPlano: 100.0
+                    valorParticular: 200.0
+                tipo: particular
+                numero_plano: null
+                usuario_id: 1
+                valor_total: 200.0
+        400:
+          description: Campos obrigatórios não informados ou formato inválido
+        401:
+          description: Não autorizado
+        403:
+          description: Acesso negado
+        404:
+          description: Paciente ou usuário não encontrado
+        500:
+          description: Erro interno
+    get:
+      tags:
+        - Atendimentos
+      summary: Listar atendimentos de forma paginada (protegido)
+      parameters:
+        - name: pagina
+          in: query
+          type: integer
+          default: 1
+        - name: itensPorPagina
+          in: query
+          type: integer
+          default: 10
+        - name: Authorization
+          in: header
+          required: true
+          type: string
+      responses:
+        200:
+          description: Lista de atendimentos retornada
+          examples:
+            application/json:
+              pagina: 1
+              totalPaginas: 1
+              itensPorPagina: 10
+              atendimentosTotais: 1
+              atendimentos:
+                - dados:
+                    id: 1
+                    data: 2025-10-10T10:00:00
+                    paciente_id: 1
+                    procedimentos:
+                      - id: 1
+                        nome: Limpeza Dental
+                        desc: Procedimento de limpeza completa
+                        valorPlano: 100.0
+                        valorParticular: 200.0
+                    tipo: particular
+                    numero_plano: null
+                    usuario_id: 1
+                    valor_total: 200.0
+        401:
+          description: Não autorizado
+        404:
+          description: Página solicitada não disponível
+        500:
+          description: Erro interno
+
+  /api/v1/atendimentos/{id}:
+    get:
+      tags:
+        - Atendimentos
+      summary: Obter atendimento por id (protegido)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          type: integer
+        - name: Authorization
+          in: header
+          required: true
+          type: string
+      responses:
+        200:
+          description: Atendimento encontrado
+          examples:
+            application/json:
+              atendimento:
+                id: 1
+                data: 2025-10-10T10:00:00
+                paciente_id: 1
+                procedimentos:
+                  - id: 1
+                    nome: Limpeza Dental
+                    desc: Procedimento de limpeza completa
+                    valorPlano: 100.0
+                    valorParticular: 200.0
+                tipo: particular
+                numero_plano: null
+                usuario_id: 1
+                valor_total: 200.0
+        401:
+          description: Não autorizado
+        403:
+          description: Acesso negado
+        404:
+          description: Atendimento não encontrado
+        500:
+          description: Erro interno
+    put:
+      tags:
+        - Atendimentos
+      summary: Atualizar um atendimento (protegido)
+      consumes:
+        - application/json
+      parameters:
+        - name: id
+          in: path
+          required: true
+          type: integer
+        - name: Authorization
+          in: header
+          required: true
+          type: string
+        - in: body
+          name: body
+          required: true
+          schema:
+            $ref: '#/definitions/AtendimentoCreate'
+          examples:
+            application/json:
+              data: 2025-10-10T10:00:00
+              paciente_id: 1
+              procedimentos:
+                - id: 1
+                  nome: Limpeza Dental
+                  desc: Procedimento de limpeza completa
+                  valorPlano: 100.0
+                  valorParticular: 200.0
+              tipo: plano
+              numero_plano: 12345
+              usuario_id: 1
+              valor_total: 100.0
+      responses:
+        200:
+          description: Atendimento atualizado com sucesso
+          examples:
+            application/json:
+              atendimento:
+                id: 1
+                data: 2025-10-10T10:00:00
+                paciente_id: 1
+                procedimentos:
+                  - id: 1
+                    nome: Limpeza Dental
+                    desc: Procedimento de limpeza completa
+                    valorPlano: 100.0
+                    valorParticular: 200.0
+                tipo: particular
+                numero_plano: null
+                usuario_id: 1
+                valor_total: 80.0
+        400:
+          description: Campos obrigatórios não informados ou formato inválido
+        401:
+          description: Não autorizado
+        403:
+          description: Acesso negado
+        404:
+          description: Atendimento não encontrado
+        500:
+          description: Erro interno
+    delete:
+      tags:
+        - Atendimentos
+      summary: Deletar um atendimento (protegido)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          type: integer
+        - name: Authorization
+          in: header
+          required: true
+          type: string
+      responses:
+        200:
+          description: Atendimento deletado com sucesso
+        401:
+          description: Não autorizado
+        403:
+          description: Acesso negado
+        404:
+          description: Atendimento não encontrado
+        500:
+          description: Erro interno
+
+  /api/v1/atendimentos/{data_inicio}/{data_fim}:
+    get:
+      tags:
+        - Atendimentos
+      summary: Listar atendimentos entre duas datas (protegido)
+      parameters:
+        - name: data_inicio
+          in: path
+          required: true
+          type: string
+          description: Data inicial no formato YYYY-MM-DD
+        - name: data_fim
+          in: path
+          required: true
+          type: string
+          description: Data final no formato YYYY-MM-DD
+        - name: pagina
+          in: query
+          type: integer
+          default: 1
+        - name: itensPorPagina
+          in: query
+          type: integer
+          default: 10
+        - name: Authorization
+          in: header
+          required: true
+          type: string
+      responses:
+        200:
+          description: Lista de atendimentos entre as datas retornada
+          examples:
+            application/json:
+              pagina: 1
+              totalPaginas: 1
+              itensPorPagina: 10
+              atendimentosTotais: 1
+              atendimentos:
+                - dados:
+                    id: 1
+                    data: 2025-10-10T10:00:00
+                    paciente_id: 1
+                    procedimentos:
+                      - id: 1
+                        nome: Limpeza Dental
+                        desc: Procedimento de limpeza completa
+                        valorPlano: 100.0
+                        valorParticular: 200.0
+                    tipo: particular
+                    numero_plano: null
+                    usuario_id: 1
+                    valor_total: 80.0
+        400:
+          description: Parâmetros de data inválidos
+        401:
+          description: Não autorizado
+        404:
+          description: Nenhum atendimento encontrado para o intervalo
         500:
           description: Erro interno
