@@ -69,12 +69,14 @@ class AtendimentoService:
         # Obter página específica
         offset = (pagina - 1) * itens_por_pagina
         atendimentos = self.atendimento_dao.listar_atendimentos_por_data(data_inicio, data_fim, offset, itens_por_pagina, usuario_filtro)
+        # Formatar cada atendimento para o layout solicitado
+        itens_formatados = [self._format_atendimento(a) for a in (atendimentos or [])]
         resposta = {
             'pagina': pagina,
             'totalPaginas': total_paginas,
             'itensPorPagina': itens_por_pagina,
             'registrosTotais': total,
-            'itens': atendimentos
+            'atendimentos': itens_formatados
         }
         return resposta, 200
 
@@ -98,7 +100,9 @@ class AtendimentoService:
         if usuario.get('tipo') != TipoUsuario.ADMIN.value and atendimento['idUsuario'] != usuario_id:
             return {"msg": "Você não tem permissão para ver este atendimento."}, 403
 
-        return atendimento, 200
+        # Formatar atendimento único
+        atendimento_formatado = self._format_atendimento(atendimento)
+        return atendimento_formatado, 200
 
     def obter_atendimentos(self, token: str, pagina: int = 1, itens_por_pagina: int = 10):
         """
@@ -122,14 +126,74 @@ class AtendimentoService:
         # Obter página específica
         offset = (pagina - 1) * itens_por_pagina
         atendimentos_pagina = self.atendimento_dao.listar_atendimentos(usuario_filtro, offset, itens_por_pagina)
+        itens_formatados = [self._format_atendimento(a) for a in (atendimentos_pagina or [])]
         resposta = {
             'pagina': pagina,
             'totalPaginas': total_paginas,
             'itensPorPagina': itens_por_pagina,
             'registrosTotais': total,
-            'itens': atendimentos_pagina
+            'atendimentos': itens_formatados
         }
         return resposta, 200
+
+    def _format_atendimento(self, atendimento: dict):
+        """Converte o dicionário retornado pelo DAO para o layout JSON solicitado.
+
+        Resultado:
+        {
+            "id": ...,
+            "id_paciente": ...,
+            "id_usuario": ...,
+            "data_hora": "YYYY-MM-DDTHH:MM:SS",
+            "tipo": ...,
+            "procedimentos": [ {id, nome, descricao, valor_plano, valor_particular}, ... ]
+        }
+        """
+        if not atendimento:
+            return {}
+
+        # Mapear campos básicos
+        resultado = {
+            'id': atendimento.get('id'),
+            'id_paciente': atendimento.get('idPaciente') if atendimento.get('idPaciente') is not None else atendimento.get('paciente_id'),
+            'id_usuario': atendimento.get('idUsuario') if atendimento.get('idUsuario') is not None else atendimento.get('usuario_id'),
+            'tipo': atendimento.get('tipo')
+        }
+
+        # Formatar data/hora para ISO com 'T'
+        data_val = atendimento.get('data') or atendimento.get('data_hora')
+        if isinstance(data_val, str):
+            # Substituir espaço por T se necessário
+            data_iso = data_val.replace(' ', 'T')
+        else:
+            try:
+                data_iso = data_val.isoformat(sep='T')
+            except Exception:
+                data_iso = None
+        resultado['data_hora'] = data_iso
+
+        # Recuperar procedimentos detalhados
+        procedimentos_list = []
+        proc_ids = atendimento.get('procedimentos') or []
+        for pid in proc_ids:
+            try:
+                proc = self.procedimento_dao.obterProcedimentoPorId(pid)
+            except Exception:
+                proc = None
+            if not proc:
+                continue
+            procedimentos_list.append({
+                'id': proc.get('id'),
+                'nome': proc.get('nome'),
+                'descricao': proc.get('desc') or proc.get('descricao'),
+                'valor_plano': proc.get('valorPlano'),
+                'valor_particular': proc.get('valorParticular')
+            })
+
+        resultado['procedimentos'] = procedimentos_list
+        # Incluir valor total calculado pelo DAO (coluna valorTotal)
+        resultado['valor_total'] = atendimento.get('valorTotal') if atendimento.get('valorTotal') is not None else atendimento.get('valor_total')
+        return resultado
 
     def criar_atendimento(self, token: str, data_request):
         """

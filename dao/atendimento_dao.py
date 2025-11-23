@@ -27,7 +27,7 @@ class AtendimentoDao(Comandos):
             params.append(usuario_id)
         query += '''
             GROUP BY a.id
-            ORDER BY a.data
+            ORDER BY a.idUsuario, a.data
             LIMIT ? OFFSET ?
         '''
         params.extend([limit, offset])
@@ -112,7 +112,7 @@ class AtendimentoDao(Comandos):
         if usuario_id is not None:
             query += ' WHERE a.idUsuario = ?'
             params.append(usuario_id)
-        query += ' GROUP BY a.id'
+        query += ' GROUP BY a.id ORDER BY a.idUsuario, a.data'
         if limit is not None:
             query += ' LIMIT ? OFFSET ?'
             params.extend([limit, offset])
