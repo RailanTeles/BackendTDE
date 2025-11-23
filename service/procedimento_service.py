@@ -44,9 +44,6 @@ class ProcedimentoService:
         if not usuario_id:
             return {"msg": "Token inválido"}, 401
 
-        if not self._verificar_admin(token):
-            return {"msg": "Apenas administradores podem criar procedimentos."}, 403
-
         nome = data_request.get('nome', '').strip()
         desc = data_request.get('desc', '').strip()
         valor_plano = data_request.get('valorPlano')
@@ -83,9 +80,6 @@ class ProcedimentoService:
         usuario_id = decode_token(token)
         if not usuario_id:
             return {"msg": "Token inválido"}, 401
-
-        if not self._verificar_admin(token):
-            return {"msg": "Apenas administradores podem editar procedimentos."}, 403
 
         procedimento_existente = self.procedimento_dao.obter_procedimento_por_id(procedimento_id)
         if not procedimento_existente:
@@ -130,9 +124,6 @@ class ProcedimentoService:
         usuario_id = decode_token(token)
         if not usuario_id:
             return {"msg": "Token inválido"}, 401
-
-        if not self._verificar_admin(token):
-            return {"msg": "Apenas administradores podem remover procedimentos."}, 403
 
         procedimento = self.procedimento_dao.obter_procedimento_por_id(procedimento_id)
         if not procedimento:
