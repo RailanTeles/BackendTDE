@@ -8,6 +8,18 @@ class ProcedimentoService:
         self.procedimento_dao = ProcedimentoDao()
         self.usuario_dao = UsuarioDao()
 
+    def _verificar_admin(self, token: str):
+        """Verifica se o usuário é administrador"""
+        usuario_id = decode_token(token)
+        if not usuario_id:
+            return {"msg": "Token inválido"}, 401
+        
+        usuario = self.usuario_dao.obter_usuario_por_id(usuario_id)
+        if not usuario or usuario.get('tipo') != TipoUsuario.ADMIN.value:
+            return {"msg": "Acesso negado. Apenas administradores podem realizar esta ação."}, 403
+        
+        return None
+
     def obter_procedimentos(self, token: str, pagina: int = 1, itens_por_pagina: int = 2):
         usuario_id = decode_token(token)
         if not usuario_id:
@@ -40,9 +52,10 @@ class ProcedimentoService:
         return procedimento, 200
 
     def criar_procedimento(self, token: str, data_request):
-        usuario_id = decode_token(token)
-        if not usuario_id:
-            return {"msg": "Token inválido"}, 401
+        # Verificar se usuário é admin
+        erro_admin = self._verificar_admin(token)
+        if erro_admin:
+            return erro_admin
 
         nome = data_request.get('nome', '').strip()
         desc = data_request.get('desc', '').strip()
@@ -55,20 +68,19 @@ class ProcedimentoService:
         if valor_plano is None or valor_particular is None:
             return {"msg": "Campos 'valorPlano' e 'valorParticular' são obrigatórios."}, 400
 
-        try:
-            valor_plano = float(valor_plano)
-            valor_particular = float(valor_particular)
-            if valor_plano < 0 or valor_particular < 0:
-                return {"msg": "Valores não podem ser negativos."}, 400
-        except (ValueError, TypeError):
+        # Validação sem try/except
+        if not isinstance(valor_plano, (int, float)) or not isinstance(valor_particular, (int, float)):
             return {"msg": "Campos 'valorPlano' e 'valorParticular' devem ser números válidos."}, 400
+
+        if valor_plano < 0 or valor_particular < 0:
+            return {"msg": "Valores não podem ser negativos."}, 400
 
         existente = self.procedimento_dao.obter_procedimento_por_nome(nome)
         if existente:
             return {"msg": "Já existe um procedimento com esse nome."}, 409
 
         procedimento_id = self.procedimento_dao.criar_procedimento_db(
-            nome, desc, valor_plano, valor_particular
+            nome, desc, float(valor_plano), float(valor_particular)
         )
 
         return {
@@ -77,9 +89,10 @@ class ProcedimentoService:
         }, 201
 
     def atualizar_procedimento(self, token: str, procedimento_id: int, data_request):
-        usuario_id = decode_token(token)
-        if not usuario_id:
-            return {"msg": "Token inválido"}, 401
+        # Verificar se usuário é admin
+        erro_admin = self._verificar_admin(token)
+        if erro_admin:
+            return erro_admin
 
         procedimento_existente = self.procedimento_dao.obter_procedimento_por_id(procedimento_id)
         if not procedimento_existente:
@@ -102,28 +115,28 @@ class ProcedimentoService:
         if not nome:
             return {"msg": "O campo 'nome' não pode estar vazio."}, 400
 
-        try:
-            valor_plano = float(valor_plano)
-            valor_particular = float(valor_particular)
-            if valor_plano < 0 or valor_particular < 0:
-                return {"msg": "Valores não podem ser negativos."}, 400
-        except (ValueError, TypeError):
+        # Validação sem try/except
+        if not isinstance(valor_plano, (int, float)) or not isinstance(valor_particular, (int, float)):
             return {"msg": "Campos 'valorPlano' e 'valorParticular' devem ser números válidos."}, 400
+
+        if valor_plano < 0 or valor_particular < 0:
+            return {"msg": "Valores não podem ser negativos."}, 400
 
         outro_procedimento = self.procedimento_dao.obter_procedimento_por_nome(nome)
         if outro_procedimento and outro_procedimento.get('id') != procedimento_id:
             return {"msg": "Já existe outro procedimento com esse nome."}, 409
 
         self.procedimento_dao.atualizar_procedimento_db(
-            procedimento_id, nome, desc, valor_plano, valor_particular
+            procedimento_id, nome, desc, float(valor_plano), float(valor_particular)
         )
 
         return {"msg": "Procedimento atualizado com sucesso"}, 200
 
     def remover_procedimento(self, token: str, procedimento_id: int):
-        usuario_id = decode_token(token)
-        if not usuario_id:
-            return {"msg": "Token inválido"}, 401
+        # Verificar se usuário é admin
+        erro_admin = self._verificar_admin(token)
+        if erro_admin:
+            return erro_admin
 
         procedimento = self.procedimento_dao.obter_procedimento_por_id(procedimento_id)
         if not procedimento:
