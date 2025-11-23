@@ -1,108 +1,68 @@
-from flask import Blueprint, request, jsonify, g
+from flask import Blueprint, request
 from security.notations import token_required
+from service.procedimento_service import ProcedimentoService
 
+# Blueprint para rotas de procedimentos
 procedimento_routes = Blueprint('procedimento_routes', __name__)
+procedimento_service = ProcedimentoService()
 
-def get_procedimento_service():
-    """SEMPRE importar localmente para evitar circular imports"""
-    from service.procedimento_service import ProcedimentoService
-    return ProcedimentoService()
-
-def verificar_admin():
-    try:
-        # O token contém apenas o ID, então precisamos buscar o usuário no banco
-        user_id = g.get("user_id")
-        if not user_id:
-            print("❌ Nenhum user_id encontrado no contexto")
-            return False
-        
-        # Buscar informações do usuário no banco - usando SEU método
-        from dao.usuario_dao import UsuarioDao
-        usuario_dao = UsuarioDao()
-        usuario = usuario_dao.obterUsuarioId(user_id)  # SEU MÉTODO obterUsuarioId
-        
-        if not usuario:
-            print("❌ Usuário não encontrado no banco de dados")
-            return False
-        
-        print(f"🔍 Tipo de usuário: {usuario.get('tipo')}")
-        return usuario.get("tipo") == "admin"
-        
-    except Exception as e:
-        print(f"❌ Erro ao verificar admin: {str(e)}")
-        return False
-
-@procedimento_routes.route("/api/v1/procedimentos", methods=["GET"])
+@procedimento_routes.route('/api/v1/procedimentos', methods=['POST'])
 @token_required
-def obter_procedimentos():
-    try:
-        pagina = request.args.get('pagina', default=1, type=int)
-        itens_por_pagina = request.args.get('itensPorPagina', default=10, type=int)
+def criar_procedimento():
+    """
+    Cria um novo procedimento.
+    Requer autenticação via token JWT.
+    Apenas administradores podem criar procedimentos.
+    """
+    token = request.headers.get('Authorization')
+    data = request.get_json()
+    return procedimento_service.criar_procedimento(token, data)
 
-        service = get_procedimento_service()
-        resultado, status = service.obterProcedimentos(itens_por_pagina, pagina)
-        return jsonify(resultado), status
-
-    except Exception as e:
-        return jsonify({"msg": f"Erro interno do servidor: {str(e)}"}), 500
-
-@procedimento_routes.route("/api/v1/procedimentos/<int:id>", methods=["GET"])
+@procedimento_routes.route('/api/v1/procedimentos', methods=['GET'])
 @token_required
-def obter_procedimento(id):
-    try:
-        service = get_procedimento_service()
-        resultado, status = service.obterProcedimento(id)
-        return jsonify(resultado), status
+def listar_procedimentos():
+    """
+    Lista procedimentos de forma paginada.
+    Requer autenticação via token JWT.
+    Permite filtros de paginação via query params.
+    """
+    token = request.headers.get('Authorization')
+    pagina = request.args.get('pagina', default=1, type=int)
+    itensPorPagina = request.args.get('itensPorPagina', default=None, type=int)
+    itens_por_pagina_legacy = request.args.get('itens_por_pagina', default=None, type=int)
+    itens = itensPorPagina if itensPorPagina is not None else (itens_por_pagina_legacy if itens_por_pagina_legacy is not None else 2)
+    return procedimento_service.obter_procedimentos(token, pagina, itens)
 
-    except Exception as e:
-        return jsonify({"msg": f"Erro interno do servidor: {str(e)}"}), 500
-
-@procedimento_routes.route("/api/v1/procedimentos", methods=["POST"])
+@procedimento_routes.route('/api/v1/procedimentos/<int:procedimento_id>', methods=['GET'])
 @token_required
-def adicionar_procedimento():
-    try:
-        if not verificar_admin():
-            return jsonify({"msg": "Apenas administradores podem realizar esta ação."}), 403
+def obter_procedimento(procedimento_id):
+    """
+    Obtém um procedimento específico pelo ID.
+    Requer autenticação via token JWT.
+    """
+    token = request.headers.get('Authorization')
+    return procedimento_service.obter_procedimento(token, procedimento_id)
 
-        dados = request.get_json()
-        if not dados:
-            return jsonify({"msg": "Dados JSON são obrigatórios."}), 400
-
-        service = get_procedimento_service()
-        resultado, status = service.adicionarProcedimento(dados)
-        return jsonify(resultado), status
-
-    except Exception as e:
-        return jsonify({"msg": f"Erro interno do servidor: {str(e)}"}), 500
-
-@procedimento_routes.route("/api/v1/procedimentos/<int:id>", methods=["PUT"])
+@procedimento_routes.route('/api/v1/procedimentos/<int:procedimento_id>', methods=['PUT'])
 @token_required
-def alterar_procedimento(id):
-    try:
-        if not verificar_admin():
-            return jsonify({"msg": "Apenas administradores podem realizar esta ação."}), 403
+def atualizar_procedimento(procedimento_id):
+    """
+    Atualiza um procedimento existente.
+    Requer autenticação via token JWT.
+    Apenas administradores podem editar procedimentos.
+    """
+    token = request.headers.get('Authorization')
+    data = request.get_json()
+    return procedimento_service.atualizar_procedimento(token, procedimento_id, data)
 
-        dados = request.get_json()
-        if not dados:
-            return jsonify({"msg": "Dados JSON são obrigatórios."}), 400
-
-        service = get_procedimento_service()
-        resultado, status = service.alterarProcedimento(id, dados)
-        return jsonify(resultado), status
-
-    except Exception as e:
-        return jsonify({"msg": f"Erro interno do servidor: {str(e)}"}), 500
-
-@procedimento_routes.route("/api/v1/procedimentos/<int:id>", methods=["DELETE"])
+@procedimento_routes.route('/api/v1/procedimentos/<int:procedimento_id>', methods=['DELETE'])
 @token_required
-def deletar_procedimento(id):
-    try:
-        if not verificar_admin():
-            return jsonify({"msg": "Apenas administradores podem realizar esta ação."}), 403
-
-        service = get_procedimento_service()
-        resultado, status = service.deletarProcedimento(id)
-        return jsonify(resultado), status
-
-    except Exception as e:
-        return jsonify({"msg": f"Erro interno do servidor: {str(e)}"}), 500
+def remover_procedimento(procedimento_id):
+    """
+    Remove um procedimento existente.
+    Requer autenticação via token JWT.
+    Apenas administradores podem remover procedimentos.
+    Procedimentos em uso não podem ser removidos.
+    """
+    token = request.headers.get('Authorization')
+    return procedimento_service.remover_procedimento(token, procedimento_id)

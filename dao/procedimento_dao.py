@@ -1,157 +1,102 @@
-import math
 from utils.comandos_sql import Comandos
 
 class ProcedimentoDao(Comandos):
-    def __init__(self):
-        super().__init__()
+    """DAO para operações relacionadas a procedimentos."""
 
-    def obterProcedimentoPorId(self, id: int):
-        try:
-            self.conectar()
-            procedimento = self.obterRegistro(
-                "SELECT * FROM Procedimentos WHERE id = ?",
-                (id,)
-            )
-            return procedimento
-        except Exception as e:
-            raise Exception(f"Erro ao buscar procedimento por ID: {str(e)}")
-        finally:
-            self.desconectar()
+    def listar_procedimentos(self, offset=0, limit=10):
+        """Lista procedimentos com paginação."""
+        self.conectar()
+        query = '''
+            SELECT id, nome, desc, valorPlano, valorParticular
+            FROM Procedimentos
+            ORDER BY nome ASC
+            LIMIT ? OFFSET ?
+        '''
+        procedimentos = self.obterRegistros(query, (limit, offset))
+        self.desconectar()
+        return procedimentos
 
-    def obterProcedimentoPorNome(self, nome: str):
-        try:
-            self.conectar()
-            procedimento = self.obterRegistro(
-                "SELECT * FROM Procedimentos WHERE LOWER(nome) = LOWER(?)",
-                (nome,)
-            )
-            return procedimento
-        except Exception as e:
-            raise Exception(f"Erro ao buscar procedimento por nome: {str(e)}")
-        finally:
-            self.desconectar()
+    def obter_total_procedimentos(self):
+        """Retorna total de procedimentos."""
+        self.conectar()
+        result = self.obterRegistro("SELECT COUNT(*) as total FROM Procedimentos")
+        self.desconectar()
+        return result.get('total') if result else 0
 
-    def contarProcedimentos(self):
-        try:
-            self.conectar()
-            linha = self.obterRegistro("SELECT COUNT(id) AS total FROM Procedimentos")
-            return linha.get("total", 0) if linha else 0
-        except Exception as e:
-            raise Exception(f"Erro ao contar procedimentos: {str(e)}")
-        finally:
-            self.desconectar()
+    def obter_procedimento_por_id(self, procedimento_id):
+        """Obtém um procedimento pelo ID."""
+        self.conectar()
+        procedimento = self.obterRegistro(
+            "SELECT * FROM Procedimentos WHERE id = ?",
+            (procedimento_id,)
+        )
+        self.desconectar()
+        return procedimento
 
-    def obterProcedimentos(self, itensPorPagina: int = 10, pagina: int = 1):
-        try:
-            self.conectar()
+    def obter_procedimento_por_nome(self, nome: str):
+        """Obtém um procedimento pelo nome (case insensitive)."""
+        self.conectar()
+        procedimento = self.obterRegistro(
+            "SELECT * FROM Procedimentos WHERE LOWER(nome) = LOWER(?)",
+            (nome,)
+        )
+        self.desconectar()
+        return procedimento
 
-            total_row = self.obterRegistro("SELECT COUNT(id) AS total FROM Procedimentos")
-            total = total_row.get("total", 0) if total_row else 0
+    def criar_procedimento_db(self, nome: str, desc: str, valor_plano: float, valor_particular: float):
+        """Cria um novo procedimento."""
+        self.conectar()
+        self.cursor.execute(
+            """
+            INSERT INTO Procedimentos (nome, desc, valorPlano, valorParticular)
+            VALUES (?, ?, ?, ?)
+            """,
+            (nome, desc, valor_plano, valor_particular)
+        )
+        procedimento_id = self.cursor.lastrowid
+        self.comitar()
+        self.desconectar()
+        return procedimento_id
 
-            itensPorPagina = max(1, int(itensPorPagina)) if itensPorPagina else 10
-            pagina = max(1, int(pagina)) if pagina else 1
-            offset = itensPorPagina * (pagina - 1)
+    def atualizar_procedimento_db(self, procedimento_id: int, nome: str, desc: str, valor_plano: float, valor_particular: float):
+        """Atualiza um procedimento existente."""
+        self.conectar()
+        self.cursor.execute(
+            """
+            UPDATE Procedimentos
+            SET nome = ?, desc = ?, valorPlano = ?, valorParticular = ?
+            WHERE id = ?
+            """,
+            (nome, desc, valor_plano, valor_particular, procedimento_id)
+        )
+        self.comitar()
+        self.desconectar()
 
-            totalPaginas = math.ceil(total / itensPorPagina) if total > 0 else 1
+    def remover_procedimento_db(self, procedimento_id: int):
+        """Remove um procedimento existente."""
+        self.conectar()
 
-            if pagina > totalPaginas and totalPaginas > 0:
-                return None
+        # Executar o DELETE
+        self.cursor.execute("DELETE FROM Procedimentos WHERE id = ?", (procedimento_id,))
 
-            registros = self.obterRegistros(
-                "SELECT * FROM Procedimentos ORDER BY nome ASC LIMIT ? OFFSET ?",
-                (itensPorPagina, offset)
-            ) or []
+        # Verificar se alguma linha foi afetada
+        rowcount = self.cursor.rowcount
 
-            return {
-                "pagina": pagina,
-                "totalPaginas": totalPaginas,
-                "itensPorPagina": itensPorPagina,
-                "procedimentosTotais": total,
-                "procedimentos": registros
-            }
-        except Exception as e:
-            raise Exception(f"Erro ao listar procedimentos: {str(e)}")
-        finally:
-            self.desconectar()
+        self.comitar()
+        self.desconectar()
 
-    def adicionarProcedimento(self, dados: dict):
-        try:
-            print(f"📥 Dados recebidos no DAO: {dados}")  # DEBUG
-            
-            self.conectar()
-            self.cursor.execute(
-                """
-                INSERT INTO Procedimentos
-                (nome, desc, valorPlano, valorParticular)
-                VALUES (?, ?, ?, ?)
-                """,
-                (
-                    dados["nome"],
-                    dados["desc"],  # CORRETO: "desc"
-                    dados["valorPlano"],
-                    dados["valorParticular"]
-                )
-            )
-            self.comitar()
-            inserted_id = self.cursor.lastrowid
-            return {"msg": "Procedimento adicionado com sucesso", "id": inserted_id}
-        except Exception as e:
-            self.conn.rollback()
-            raise Exception(f"Erro ao adicionar procedimento: {str(e)}")
-        finally:
-            self.desconectar()
+        # Se nenhuma linha foi afetada, o procedimento não existia
+        if rowcount == 0:
+            raise Exception(f"Procedimento com ID {procedimento_id} não encontrado")
 
-    def alterarProcedimento(self, id: int, dados: dict):
-        try:
-            print(f"📥 Dados recebidos no DAO para alteração: {dados}")  # DEBUG
-            
-            self.conectar()
-            self.cursor.execute(
-                """
-                UPDATE Procedimentos
-                SET nome = ?, desc = ?, valorPlano = ?, valorParticular = ?
-                WHERE id = ?
-                """,
-                (
-                    dados["nome"],
-                    dados["desc"],  # CORRETO: "desc"
-                    dados["valorPlano"],
-                    dados["valorParticular"],
-                    id
-                )
-            )
-            self.comitar()
-            return {"msg": "Procedimento alterado com sucesso"}
-        except Exception as e:
-            self.conn.rollback()
-            raise Exception(f"Erro ao alterar procedimento: {str(e)}")
-        finally:
-            self.desconectar()
+        return True
 
-    def deletarProcedimento(self, id: int):
-        try:
-            self.conectar()
-            self.cursor.execute(
-                "DELETE FROM Procedimentos WHERE id = ?",
-                (id,)
-            )
-            self.comitar()
-            return {"msg": 'Procedimento deletado com sucesso'}
-        except Exception as e:
-            self.conn.rollback()
-            raise Exception(f"Erro ao deletar procedimento: {str(e)}")
-        finally:
-            self.desconectar()
-
-    def verificarProcedimentoEmUso(self, id: int):
-        try:
-            self.conectar()
-            registro = self.obterRegistro(
-                "SELECT 1 AS existe FROM Atendimento_Procedimento WHERE idProcedimento = ? LIMIT 1",
-                (id,)
-            )
-            return bool(registro)
-        except Exception as e:
-            raise Exception(f"Erro ao verificar procedimento em uso: {str(e)}")
-        finally:
-            self.desconectar()
+    def verificar_procedimento_em_uso(self, procedimento_id: int):
+        """Verifica se o procedimento está em uso em atendimentos."""
+        self.conectar()
+        registro = self.obterRegistro(
+            "SELECT 1 AS existe FROM Atendimento_Procedimento WHERE idProcedimento = ? LIMIT 1",
+            (procedimento_id,)
+        )
+        self.desconectar()
+        return bool(registro)
