@@ -14,8 +14,11 @@ class ProcedimentoService:
         if not usuario_id:
             return {"msg": "Token inválido"}, 401
         
-        usuario = self.usuario_dao.obter_usuario_por_id(usuario_id)
-        if not usuario or usuario.get('tipo') != TipoUsuario.ADMIN.value:
+        usuario = self.usuario_dao.obterUsuarioId(usuario_id)
+        if not usuario:
+            return {"msg": "Usuário não encontrado"}, 404
+            
+        if usuario.get('tipo') != TipoUsuario.ADMIN.value:
             return {"msg": "Acesso negado. Apenas administradores podem realizar esta ação."}, 403
         
         return None
@@ -52,7 +55,6 @@ class ProcedimentoService:
         return procedimento, 200
 
     def criar_procedimento(self, token: str, data_request):
-        # Verificar se usuário é admin
         erro_admin = self._verificar_admin(token)
         if erro_admin:
             return erro_admin
@@ -68,7 +70,6 @@ class ProcedimentoService:
         if valor_plano is None or valor_particular is None:
             return {"msg": "Campos 'valorPlano' e 'valorParticular' são obrigatórios."}, 400
 
-        # Validação sem try/except
         if not isinstance(valor_plano, (int, float)) or not isinstance(valor_particular, (int, float)):
             return {"msg": "Campos 'valorPlano' e 'valorParticular' devem ser números válidos."}, 400
 
@@ -89,7 +90,6 @@ class ProcedimentoService:
         }, 201
 
     def atualizar_procedimento(self, token: str, procedimento_id: int, data_request):
-        # Verificar se usuário é admin
         erro_admin = self._verificar_admin(token)
         if erro_admin:
             return erro_admin
@@ -115,7 +115,6 @@ class ProcedimentoService:
         if not nome:
             return {"msg": "O campo 'nome' não pode estar vazio."}, 400
 
-        # Validação sem try/except
         if not isinstance(valor_plano, (int, float)) or not isinstance(valor_particular, (int, float)):
             return {"msg": "Campos 'valorPlano' e 'valorParticular' devem ser números válidos."}, 400
 
@@ -133,7 +132,6 @@ class ProcedimentoService:
         return {"msg": "Procedimento atualizado com sucesso"}, 200
 
     def remover_procedimento(self, token: str, procedimento_id: int):
-        # Verificar se usuário é admin
         erro_admin = self._verificar_admin(token)
         if erro_admin:
             return erro_admin

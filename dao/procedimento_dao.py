@@ -75,17 +75,11 @@ class ProcedimentoDao(Comandos):
     def remover_procedimento_db(self, procedimento_id: int):
         """Remove um procedimento existente."""
         self.conectar()
-
-        # Executar o DELETE
         self.cursor.execute("DELETE FROM Procedimentos WHERE id = ?", (procedimento_id,))
-
-        # Verificar se alguma linha foi afetada
         rowcount = self.cursor.rowcount
-
         self.comitar()
         self.desconectar()
 
-        # Se nenhuma linha foi afetada, o procedimento não existia
         if rowcount == 0:
             raise Exception(f"Procedimento com ID {procedimento_id} não encontrado")
 
