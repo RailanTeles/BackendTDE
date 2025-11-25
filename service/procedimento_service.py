@@ -1,61 +1,31 @@
 from utils.jwt_util import decode_token
 from dao.procedimento_dao import ProcedimentoDao
+from dao.usuario_dao import UsuarioDao
 from models.usuario import TipoUsuario
 
 class ProcedimentoService:
     def __init__(self):
         self.procedimento_dao = ProcedimentoDao()
-        # ✅ UsuarioDao REMOVIDO conforme barema
-
-    def _verificar_admin(self, token: str):
-        """Verifica se o usuário é administrador usando apenas decode_token"""
-        if not token:
-            return {"msg": "Token não fornecido"}, 401
-            
-        # Remove 'Bearer ' se presente
-        if token.startswith('Bearer '):
-            token = token[7:]
-        
-        payload = decode_token(token)
-        
-        if not payload:
-            return {"msg": "Token inválido ou expirado"}, 401
-        
-        # Verifica se o payload contém as informações de tipo de usuário
-        if isinstance(payload, dict) and 'tipo' in payload:
-            # Token retorna payload completo com tipo
-            if payload.get('tipo') != TipoUsuario.ADMIN.value:
-                return {"msg": "Acesso negado. Apenas administradores podem realizar esta ação."}, 403
-        else:
-            # Se o decode_token não retornar um payload com 'tipo', 
-            # precisamos de uma abordagem alternativa
-            return {"msg": "Token não contém informações de permissão adequadas"}, 401
-        
-        return None
-
-    def _verificar_token_valido(self, token: str):
-        """Verifica se o token é válido para operações básicas"""
-        if not token:
-            return {"msg": "Token não fornecido"}, 401
-            
-        if token.startswith('Bearer '):
-            token = token[7:]
-        
-        payload = decode_token(token)
-        if not payload:
-            return {"msg": "Token inválido ou expirado"}, 401
-            
-        return None
+        self.usuario_dao = UsuarioDao()
 
     def obter_procedimentos(self, token: str, pagina: int = 1, itens_por_pagina: int = 2):
-        # Verificar token válido
-        erro_token = self._verificar_token_valido(token)
-        if erro_token:
-            return erro_token
+        """
+        Retorna lista paginada de procedimentos.
+        Qualquer usuário autenticado pode listar procedimentos.
+        """
+        usuario_id = decode_token(token)
+        if not usuario_id:
+            return {"msg": "Token inválido"}, 401
 
+        usuario = self.usuario_dao.obterUsuarioId(usuario_id)
+        if not usuario:
+            return {"msg": "Usuário não encontrado"}, 404
+
+        # Obter total de registros
         total = self.procedimento_dao.obter_total_procedimentos()
         total_paginas = (total // itens_por_pagina) + (1 if total % itens_por_pagina else 0)
 
+        # Obter página específica
         offset = (pagina - 1) * itens_por_pagina
         procedimentos_pagina = self.procedimento_dao.listar_procedimentos(offset, itens_por_pagina)
 
@@ -69,9 +39,17 @@ class ProcedimentoService:
         return resposta, 200
 
     def obter_procedimento(self, token: str, procedimento_id: int):
-        erro_token = self._verificar_token_valido(token)
-        if erro_token:
-            return erro_token
+        """
+        Retorna um procedimento pelo ID.
+        Qualquer usuário autenticado pode visualizar.
+        """
+        usuario_id = decode_token(token)
+        if not usuario_id:
+            return {"msg": "Token inválido"}, 401
+
+        usuario = self.usuario_dao.obterUsuarioId(usuario_id)
+        if not usuario:
+            return {"msg": "Usuário não encontrado"}, 404
 
         procedimento = self.procedimento_dao.obter_procedimento_por_id(procedimento_id)
         if not procedimento:
@@ -80,9 +58,21 @@ class ProcedimentoService:
         return procedimento, 200
 
     def criar_procedimento(self, token: str, data_request):
-        erro_admin = self._verificar_admin(token)
-        if erro_admin:
-            return erro_admin
+        """
+        Cria um novo procedimento.
+        Apenas administradores podem criar procedimentos.
+        """
+        usuario_id = decode_token(token)
+        if not usuario_id:
+            return {"msg": "Token inválido"}, 401
+
+        usuario = self.usuario_dao.obterUsuarioId(usuario_id)
+        if not usuario:
+            return {"msg": "Usuário não encontrado"}, 404
+
+        # Verificar se é admin
+        if usuario.get('tipo') != TipoUsuario.ADMIN.value:
+            return {"msg": "Acesso negado. Apenas administradores podem realizar esta ação."}, 403
 
         nome = data_request.get('nome', '').strip()
         desc = data_request.get('desc', '').strip()
@@ -101,6 +91,7 @@ class ProcedimentoService:
         if valor_plano < 0 or valor_particular < 0:
             return {"msg": "Valores não podem ser negativos."}, 400
 
+        # Verificar se já existe procedimento com mesmo nome
         existente = self.procedimento_dao.obter_procedimento_por_nome(nome)
         if existente:
             return {"msg": "Já existe um procedimento com esse nome."}, 409
@@ -115,9 +106,21 @@ class ProcedimentoService:
         }, 201
 
     def atualizar_procedimento(self, token: str, procedimento_id: int, data_request):
-        erro_admin = self._verificar_admin(token)
-        if erro_admin:
-            return erro_admin
+        """
+        Atualiza um procedimento existente.
+        Apenas administradores podem editar procedimentos.
+        """
+        usuario_id = decode_token(token)
+        if not usuario_id:
+            return {"msg": "Token inválido"}, 401
+
+        usuario = self.usuario_dao.obterUsuarioId(usuario_id)
+        if not usuario:
+            return {"msg": "Usuário não encontrado"}, 404
+
+        # Verificar se é admin
+        if usuario.get('tipo') != TipoUsuario.ADMIN.value:
+            return {"msg": "Acesso negado. Apenas administradores podem realizar esta ação."}, 403
 
         procedimento_existente = self.procedimento_dao.obter_procedimento_por_id(procedimento_id)
         if not procedimento_existente:
@@ -128,6 +131,7 @@ class ProcedimentoService:
         valor_plano = data_request.get('valorPlano')
         valor_particular = data_request.get('valorParticular')
 
+        # Usar valores existentes se não fornecidos
         if not nome:
             nome = procedimento_existente.get('nome', '').strip()
         if not desc:
@@ -146,6 +150,7 @@ class ProcedimentoService:
         if valor_plano < 0 or valor_particular < 0:
             return {"msg": "Valores não podem ser negativos."}, 400
 
+        # Verificar se outro procedimento já usa esse nome
         outro_procedimento = self.procedimento_dao.obter_procedimento_por_nome(nome)
         if outro_procedimento and outro_procedimento.get('id') != procedimento_id:
             return {"msg": "Já existe outro procedimento com esse nome."}, 409
@@ -157,14 +162,28 @@ class ProcedimentoService:
         return {"msg": "Procedimento atualizado com sucesso"}, 200
 
     def remover_procedimento(self, token: str, procedimento_id: int):
-        erro_admin = self._verificar_admin(token)
-        if erro_admin:
-            return erro_admin
+        """
+        Remove um procedimento existente.
+        Apenas administradores podem remover procedimentos.
+        Procedimentos em uso não podem ser removidos.
+        """
+        usuario_id = decode_token(token)
+        if not usuario_id:
+            return {"msg": "Token inválido"}, 401
+
+        usuario = self.usuario_dao.obterUsuarioId(usuario_id)
+        if not usuario:
+            return {"msg": "Usuário não encontrado"}, 404
+
+        # Verificar se é admin
+        if usuario.get('tipo') != TipoUsuario.ADMIN.value:
+            return {"msg": "Acesso negado. Apenas administradores podem realizar esta ação."}, 403
 
         procedimento = self.procedimento_dao.obter_procedimento_por_id(procedimento_id)
         if not procedimento:
             return {"msg": f"Procedimento ID {procedimento_id} não encontrado."}, 404
 
+        # Verificar se o procedimento está em uso
         em_uso = self.procedimento_dao.verificar_procedimento_em_uso(procedimento_id)
         if em_uso:
             return {"msg": "Não é possível excluir: procedimento está em uso em atendimentos."}, 409

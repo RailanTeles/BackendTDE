@@ -1,4 +1,4 @@
-from flask import Blueprint, request
+from flask import Blueprint, request, jsonify
 from security.notations import token_required
 from service.procedimento_service import ProcedimentoService
 
@@ -13,13 +13,13 @@ def criar_procedimento():
     Requer autenticação via token JWT.
     Apenas administradores podem criar procedimentos.
     """
-    token = request.headers.get('Authorization')
-    data = request.get_json()
-    
-    if not data:
-        return {"msg": "Dados JSON são obrigatórios"}, 400
-        
-    return procedimento_service.criar_procedimento(token, data)
+    try:
+        token = request.headers.get('Authorization')
+        data = request.get_json()
+        resposta, status = procedimento_service.criar_procedimento(token, data)
+        return jsonify(resposta), status
+    except Exception as e:
+        return jsonify({'msg': str(e)}), 500
 
 @procedimento_routes.route('/api/v1/procedimentos', methods=['GET'])
 @token_required
@@ -29,14 +29,16 @@ def listar_procedimentos():
     Requer autenticação via token JWT.
     Permite filtros de paginação via query params.
     """
-    token = request.headers.get('Authorization')
-    pagina = request.args.get('pagina', default=1, type=int)
-    itensPorPagina = request.args.get('itensPorPagina', default=None, type=int)
-    itens_por_pagina_legacy = request.args.get('itens_por_pagina', default=None, type=int)
-    
-    itens = itensPorPagina if itensPorPagina is not None else (itens_por_pagina_legacy if itens_por_pagina_legacy is not None else 2)
-    
-    return procedimento_service.obter_procedimentos(token, pagina, itens)
+    try:
+        token = request.headers.get('Authorization')
+        pagina = request.args.get('pagina', default=1, type=int)
+        itensPorPagina = request.args.get('itensPorPagina', default=None, type=int)
+        itens_por_pagina_legacy = request.args.get('itens_por_pagina', default=None, type=int)
+        itens = itensPorPagina if itensPorPagina is not None else (itens_por_pagina_legacy if itens_por_pagina_legacy is not None else 2)
+        resposta, status = procedimento_service.obter_procedimentos(token, pagina, itens)
+        return jsonify(resposta), status
+    except Exception as e:
+        return jsonify({'msg': str(e)}), 500
 
 @procedimento_routes.route('/api/v1/procedimentos/<int:procedimento_id>', methods=['GET'])
 @token_required
@@ -45,8 +47,12 @@ def obter_procedimento(procedimento_id):
     Obtém um procedimento específico pelo ID.
     Requer autenticação via token JWT.
     """
-    token = request.headers.get('Authorization')
-    return procedimento_service.obter_procedimento(token, procedimento_id)
+    try:
+        token = request.headers.get('Authorization')
+        resposta, status = procedimento_service.obter_procedimento(token, procedimento_id)
+        return jsonify(resposta), status
+    except Exception as e:
+        return jsonify({'msg': str(e)}), 500
 
 @procedimento_routes.route('/api/v1/procedimentos/<int:procedimento_id>', methods=['PUT'])
 @token_required
@@ -56,13 +62,13 @@ def atualizar_procedimento(procedimento_id):
     Requer autenticação via token JWT.
     Apenas administradores podem editar procedimentos.
     """
-    token = request.headers.get('Authorization')
-    data = request.get_json()
-    
-    if not data:
-        return {"msg": "Dados JSON são obrigatórios"}, 400
-        
-    return procedimento_service.atualizar_procedimento(token, procedimento_id, data)
+    try:
+        token = request.headers.get('Authorization')
+        data = request.get_json()
+        resposta, status = procedimento_service.atualizar_procedimento(token, procedimento_id, data)
+        return jsonify(resposta), status
+    except Exception as e:
+        return jsonify({'msg': str(e)}), 500
 
 @procedimento_routes.route('/api/v1/procedimentos/<int:procedimento_id>', methods=['DELETE'])
 @token_required
@@ -73,5 +79,9 @@ def remover_procedimento(procedimento_id):
     Apenas administradores podem remover procedimentos.
     Procedimentos em uso não podem ser removidos.
     """
-    token = request.headers.get('Authorization')
-    return procedimento_service.remover_procedimento(token, procedimento_id)
+    try:
+        token = request.headers.get('Authorization')
+        resposta, status = procedimento_service.remover_procedimento(token, procedimento_id)
+        return jsonify(resposta), status
+    except Exception as e:
+        return jsonify({'msg': str(e)}), 500
