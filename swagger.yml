@@ -54,7 +54,7 @@ paths:
                 example: Logado com sucesso
         400:
           description: E-mail e senha são campos obrigatórios
-        404:
+        401:
           description: E-mail ou senha incorretas
         500:
           description: Erro interno
@@ -271,9 +271,7 @@ paths:
         400:
           description: Campos obrigatórios não informados
         401:
-          description: Não autorizado
-        401:
-          description: Senha incorreta
+          description: Não autorizado ou senha incorreta
         500:
           description: Erro interno
 
@@ -381,7 +379,7 @@ paths:
           required: true
           schema:
             type: object
-            properties:
+                properties:
               paciente:
                 type: object
                 required:
@@ -437,7 +435,7 @@ paths:
                   rua:
                     type: string
                   numeroCasa:
-                    type: integer
+                    type: string
           examples:
             application/json:
               paciente:
@@ -660,7 +658,7 @@ paths:
               usuario_id: 1
               valor_total: 200.0
       responses:
-        200:
+        201:
           description: Atendimento criado com sucesso
           examples:
             application/json:
@@ -937,23 +935,32 @@ paths:
           in: query
           type: integer
           default: 1
+          description: Página solicitada (1-based)
         - name: itensPorPagina
           in: query
           type: integer
-          default: 10
+          default: 2
+          description: Itens por página (padrão atual do service = 2)
+        - name: itens_por_pagina
+          in: query
+          type: integer
+          default: 2
+          description: Parâmetro legado aceito pelo serviço (mesma função que itensPorPagina)
         - name: Authorization
           in: header
           required: true
           type: string
       responses:
         200:
-          description: Lista de procedimentos retornada
+          description: Lista de procedimentos retornada (paginada)
+          schema:
+            $ref: '#/definitions/ProcedimentoList'
           examples:
             application/json:
               pagina: 1
               totalPaginas: 1
-              itensPorPagina: 10
-              procedimentosTotais: 2
+              itensPorPagina: 2
+              registrosTotais: 2
               procedimentos:
                 - id: 1
                   nome: Limpeza Dental
@@ -966,11 +973,12 @@ paths:
                   valorPlano: 150.0
                   valorParticular: 300.0
         401:
-          description: Não autorizado
+          description: Não autorizado (token inválido ou ausente)
         404:
           description: Página solicitada não disponível
         500:
           description: Erro interno
+
     post:
       tags:
         - Procedimentos
@@ -986,30 +994,7 @@ paths:
           name: body
           required: true
           schema:
-            type: object
-            required:
-              - nome
-              - valorPlano
-              - valorParticular
-            properties:
-              nome:
-                type: string
-                description: Nome do procedimento
-                example: Limpeza Dental
-              desc:
-                type: string
-                description: Descrição do procedimento
-                example: Procedimento de limpeza completa dos dentes
-              valorPlano:
-                type: number
-                format: float
-                description: Valor do procedimento para clientes com plano
-                example: 100.0
-              valorParticular:
-                type: number
-                format: float
-                description: Valor do procedimento para clientes particulares
-                example: 200.0
+            $ref: '#/definitions/ProcedimentoCreate'
       responses:
         201:
           description: Procedimento criado com sucesso
@@ -1018,14 +1003,14 @@ paths:
             properties:
               msg:
                 type: string
-                example: Procedimento adicionado com sucesso
+                example: Procedimento criado com sucesso
               id:
                 type: integer
                 example: 1
         400:
           description: Campos obrigatórios não informados ou valores inválidos
         401:
-          description: Não autorizado
+          description: Não autorizado (token inválido ou ausente)
         403:
           description: Acesso negado - apenas administradores
         409:
@@ -1043,6 +1028,7 @@ paths:
           in: path
           required: true
           type: integer
+          description: ID do procedimento
         - name: Authorization
           in: header
           required: true
@@ -1050,6 +1036,8 @@ paths:
       responses:
         200:
           description: Procedimento encontrado
+          schema:
+            $ref: '#/definitions/Procedimento'
           examples:
             application/json:
               id: 1
@@ -1057,14 +1045,13 @@ paths:
               desc: Procedimento de limpeza completa dos dentes
               valorPlano: 100.0
               valorParticular: 200.0
-        400:
-          description: ID do procedimento é obrigatório
         401:
-          description: Não autorizado
+          description: Não autorizado (token inválido ou ausente)
         404:
           description: Procedimento não encontrado
         500:
           description: Erro interno
+
     put:
       tags:
         - Procedimentos
@@ -1076,6 +1063,7 @@ paths:
           in: path
           required: true
           type: integer
+          description: ID do procedimento a ser atualizado
         - name: Authorization
           in: header
           required: true
@@ -1084,26 +1072,7 @@ paths:
           name: body
           required: true
           schema:
-            type: object
-            properties:
-              nome:
-                type: string
-                description: Nome do procedimento
-                example: Limpeza Dental Completa
-              desc:
-                type: string
-                description: Descrição do procedimento
-                example: Procedimento completo de limpeza e polimento dental
-              valorPlano:
-                type: number
-                format: float
-                description: Valor do procedimento para clientes com plano
-                example: 120.0
-              valorParticular:
-                type: number
-                format: float
-                description: Valor do procedimento para clientes particulares
-                example: 250.0
+            $ref: '#/definitions/ProcedimentoUpdate'
       responses:
         200:
           description: Procedimento alterado com sucesso
@@ -1112,11 +1081,11 @@ paths:
             properties:
               msg:
                 type: string
-                example: Procedimento alterado com sucesso
+                example: Procedimento atualizado com sucesso
         400:
           description: Campos obrigatórios não informados ou valores inválidos
         401:
-          description: Não autorizado
+          description: Não autorizado (token inválido ou ausente)
         403:
           description: Acesso negado - apenas administradores
         404:
@@ -1125,6 +1094,7 @@ paths:
           description: Já existe outro procedimento com esse nome
         500:
           description: Erro interno
+
     delete:
       tags:
         - Procedimentos
@@ -1134,6 +1104,7 @@ paths:
           in: path
           required: true
           type: integer
+          description: ID do procedimento a ser removido
         - name: Authorization
           in: header
           required: true
@@ -1146,11 +1117,9 @@ paths:
             properties:
               msg:
                 type: string
-                example: Procedimento deletado com sucesso
-        400:
-          description: ID do procedimento é obrigatório
+                example: Procedimento removido com sucesso
         401:
-          description: Não autorizado
+          description: Não autorizado (token inválido ou ausente)
         403:
           description: Acesso negado - apenas administradores
         404:
@@ -1160,56 +1129,8 @@ paths:
         500:
           description: Erro interno
 
+# --- Definitions relacionadas a Procedimentos ---
 definitions:
-  AtendimentoCreate:
-    type: object
-    required:
-      - data
-      - paciente_id
-      - procedimentos
-      - tipo
-      - usuario_id
-      - valor_total
-    properties:
-      data:
-        type: string
-        format: date-time
-        description: Data e hora do atendimento
-      paciente_id:
-        type: integer
-        description: ID do paciente
-      procedimentos:
-        type: array
-        items:
-          type: object
-          properties:
-            id:
-              type: integer
-            nome:
-              type: string
-            desc:
-              type: string
-            valorPlano:
-              type: number
-              format: float
-            valorParticular:
-              type: number
-              format: float
-      tipo:
-        type: string
-        enum: [particular, plano]
-        description: Tipo de atendimento
-      numero_plano:
-        type: string
-        description: Número do plano (obrigatório se tipo for 'plano')
-      usuario_id:
-        type: integer
-        description: ID do usuário que realizou o atendimento
-      valor_total:
-        type: number
-        format: float
-        description: Valor total do atendimento
-
   Procedimento:
     type: object
     required:
@@ -1234,3 +1155,135 @@ definitions:
         type: number
         format: float
         description: Valor para clientes particulares
+    example:
+      id: 1
+      nome: Limpeza Dental
+      desc: Procedimento de limpeza completa dos dentes
+      valorPlano: 100.0
+      valorParticular: 200.0
+
+  ProcedimentoCreate:
+    type: object
+    required:
+      - nome
+      - valorPlano
+      - valorParticular
+    properties:
+      nome:
+        type: string
+        description: Nome do procedimento
+        example: Limpeza Dental
+      desc:
+        type: string
+        description: Descrição do procedimento
+        example: Procedimento de limpeza completa dos dentes
+      valorPlano:
+        type: number
+        format: float
+        description: Valor do procedimento para clientes com plano
+        example: 100.0
+      valorParticular:
+        type: number
+        format: float
+        description: Valor do procedimento para clientes particulares
+        example: 200.0
+
+  ProcedimentoUpdate:
+    type: object
+    properties:
+      nome:
+        type: string
+        description: Nome do procedimento
+        example: Limpeza Dental Completa
+      desc:
+        type: string
+        description: Descrição do procedimento
+        example: Procedimento completo de limpeza e polimento dental
+      valorPlano:
+        type: number
+        format: float
+        description: Valor do procedimento para clientes com plano
+        example: 120.0
+      valorParticular:
+        type: number
+        format: float
+        description: Valor do procedimento para clientes particulares
+        example: 250.0
+
+  ProcedimentoList:
+    type: object
+    properties:
+      pagina:
+        type: integer
+        description: Página atual
+        example: 1
+      totalPaginas:
+        type: integer
+        description: Total de páginas
+        example: 1
+      itensPorPagina:
+        type: integer
+        description: Itens por página
+        example: 2
+      registrosTotais:
+        type: integer
+        description: Total de registros
+        example: 2
+      procedimentos:
+        type: array
+        items:
+          $ref: '#/definitions/Procedimento'
+  AtendimentoCreate:
+    type: object
+    required:
+      - data
+      - paciente_id
+      - procedimentos
+      - tipo
+    properties:
+      data:
+        type: string
+        format: date-time
+        description: Data/hora do atendimento (YYYY-MM-DDTHH:MM:SS)
+      paciente_id:
+        type: integer
+      procedimentos:
+        type: array
+        items:
+          type: object
+          required:
+            - id
+          properties:
+            id:
+              type: integer
+      tipo:
+        type: string
+        enum: [plano, particular]
+      numero_plano:
+        type: integer
+        x-nullable: true
+
+  Atendimento:
+    type: object
+    properties:
+      id:
+        type: integer
+      data:
+        type: string
+        format: date-time
+      paciente_id:
+        type: integer
+      procedimentos:
+        type: array
+        items:
+          $ref: '#/definitions/Procedimento'
+      tipo:
+        type: string
+      numero_plano:
+        type: integer
+        x-nullable: true
+      usuario_id:
+        type: integer
+      valor_total:
+        type: number
+        format: float
