@@ -71,6 +71,7 @@ def adicionarPaciente():
             "rua": "Rua Exemplo",
             "numeroCasa": "123"
         }
+    }
     """
     try:
         data = request.get_json()
